@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAPODIK DIGITAL - Multi Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Loader Transisi Aplikasi -->
+  <div id="app-loader" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center transition-all duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center max-w-xs w-full mx-4">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mb-4"></div>
+      <p class="text-sm font-semibold text-slate-700" id="loader-text">Memuat aplikasi...</p>
+    </div>
+  </div>
+
+  <!-- Alert System Custom (Ganti Browser Alert) -->
+  <div id="custom-alert" class="fixed top-5 right-5 z-50 max-w-md transform translate-x-full transition-transform duration-300 ease-out hidden">
+    <div class="bg-white border-l-4 border-indigo-600 shadow-xl rounded-r-xl p-4 flex items-start gap-3">
+      <div id="alert-icon-container" class="text-indigo-600 mt-0.5">
+        <i class="fa-solid fa-circle-info text-lg"></i>
+      </div>
+      <div class="flex-1">
+        <h4 class="font-bold text-slate-800 text-sm" id="alert-title">Pemberitahuan</h4>
+        <p class="text-xs text-slate-600 mt-1" id="alert-message">Pesan notifikasi di sini.</p>
+      </div>
+      <button onclick="closeAlert()" class="text-slate-400 hover:text-slate-600 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTAINER UTAMA UNTUK SPA NAVIGATION -->
+  <main id="app-content" class="flex-1 flex flex-col min-h-screen">
+    <!-- Halaman default di-load di sini secara dinamis -->
+  </main>
+
+  <!-- ======================================================================= -->
+  <!-- 1. COMPONENT LOGIN (CompLogin.html) -->
+  <!-- ======================================================================= -->
+  <template id="temp-login">
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 px-4 py-12 relative overflow-hidden animate-fade-in">
+      <div class="absolute w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -top-12 -left-12"></div>
+      <div class="absolute w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -bottom-12 -right-12"></div>
+      
+      <div class="bg-white/95 backdrop-blur-md w-full max-w-md p-8 rounded-3xl shadow-2xl border border-white/20 transition-all duration-300">
+        <div class="flex flex-col items-center mb-8">
+          <div id="login-logo-container" class="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-indigo-800 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-4 overflow-hidden p-1.5">
+            <i id="login-default-icon" class="fa-solid fa-graduation-cap text-white text-3xl animate-bounce"></i>
+            <img id="login-custom-logo" class="hidden w-full h-full object-cover rounded-xl" src="" alt="Logo Sekolah">
+          </div>
+          <h2 id="login-app-title" class="text-2xl font-extrabold text-slate-800 tracking-tight text-center">DAPODIK DIGITAL</h2>
+          <p id="login-app-slogan" class="text-xs text-slate-500 mt-1.5 uppercase tracking-wider font-semibold text-center">Sistem Portal Pendidikan Modern</p>
+        </div>
+
+        <form id="form-login" class="space-y-5" onsubmit="handleLoginSubmit(event)">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Username</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="login-username" required class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm" placeholder="Masukkan username">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Password</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <input type="password" id="login-password" required class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm" placeholder="Masukkan password">
+              <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 hover:opacity-95 transform active:scale-95 transition-all text-sm">
+            Masuk Sekarang <i class="fa-solid fa-arrow-right ml-2"></i>
+          </button>
+        </form>
+
+        <!-- Jembatan Integrasi ke Apps Script -->
+        <div id="gas-bridge-container" class="mt-4 pt-4 border-t border-slate-100 hidden">
+          <button type="button" onclick="toggleGasBridgeInput()" class="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold transition-all flex items-center justify-center gap-1 mx-auto">
+            <i class="fa-solid fa-circle-nodes"></i> Pengaturan Jembatan Database (Hosting Mode)
+          </button>
+          <div id="gas-url-form" class="hidden mt-3 space-y-2">
+            <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider">URL Aplikasi Web Google Apps Script (Web App URL)</label>
+            <input type="url" id="gas-url-input" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="https://script.google.com/macros/s/.../exec">
+            <div class="flex gap-2">
+              <button type="button" onclick="saveGasUrl()" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg shadow-sm transition-all">Hubungkan</button>
+              <button type="button" onclick="clearGasUrl()" class="flex-1 py-2 bg-slate-100 text-slate-700 border border-slate-200 font-bold text-[10px] rounded-lg hover:bg-slate-200 transition-all">Gunakan Demo</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+          <p id="login-app-footer" class="text-xs text-slate-400">DAPODIK Web App v3.0 &copy; 2026</p>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ======================================================================= -->
+  <!-- 2. COMPONENT DASHBOARD ADMIN (CompDashboardAdmin.html) -->
+  <!-- ======================================================================= -->
+  <template id="temp-db-admin">
+    <div class="flex-1 flex flex-col md:flex-row min-h-screen">
+      <!-- Sidebar Admin -->
+      <aside class="w-full md:w-64 bg-slate-900 text-white flex flex-col border-r border-slate-800">
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="sidebar-logo-container" class="p-2 bg-indigo-600 rounded-xl w-11 h-11 flex items-center justify-center overflow-hidden">
+              <i id="sidebar-default-icon" class="fa-solid fa-shield-halved text-white text-lg"></i>
+              <img id="sidebar-custom-logo" class="hidden w-full h-full object-cover rounded-lg" src="" alt="Logo Sekolah">
+            </div>
+            <div>
+              <h1 id="sidebar-app-title" class="font-bold text-sm tracking-wide">ADMIN PORTAL</h1>
+              <p id="sidebar-app-subtitle" class="text-[10px] text-slate-400">Dapodik Administrator</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="p-4 flex-1 space-y-1 overflow-y-auto custom-scrollbar">
+          <button onclick="switchAdminTab('overview')" id="btn-tab-overview" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-indigo-400 bg-slate-800/50">
+            <i class="fa-solid fa-chart-pie w-5"></i> Ringkasan
+          </button>
+
+          <!-- Dropdown Siswa -->
+          <div class="space-y-1">
+            <button onclick="toggleSiswaMenu()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-white">
+              <span class="flex items-center gap-3">
+                <i class="fa-solid fa-user-graduate w-5"></i> Data Siswa
+              </span>
+              <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" id="icon-arrow-siswa"></i>
+            </button>
+            <div id="submenu-siswa" class="hidden pl-9 space-y-1 transition-all duration-300">
+              <button onclick="switchAdminTab('siswa-sd')" id="btn-tab-siswa-sd" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> SD
+              </button>
+              <button onclick="switchAdminTab('siswa-smp')" id="btn-tab-siswa-smp" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> SMP
+              </button>
+              <button onclick="switchAdminTab('siswa-sma')" id="btn-tab-siswa-sma" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> SMA
+              </button>
+              <button onclick="switchAdminTab('siswa-emis')" id="btn-tab-siswa-emis" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> EMIS
+              </button>
+            </div>
+          </div>
+
+          <!-- Dropdown Guru -->
+          <div class="space-y-1">
+            <button onclick="toggleGuruMenu()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-white">
+              <span class="flex items-center gap-3">
+                <i class="fa-solid fa-chalkboard-user w-5"></i> Data Guru
+              </span>
+              <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" id="icon-arrow-guru"></i>
+            </button>
+            <div id="submenu-guru" class="hidden pl-9 space-y-1 transition-all duration-300">
+              <button onclick="switchAdminTab('guru-sd')" id="btn-tab-guru-sd" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> SD
+              </button>
+              <button onclick="switchAdminTab('guru-smp')" id="btn-tab-guru-smp" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> SMP
+              </button>
+              <button onclick="switchAdminTab('guru-sma')" id="btn-tab-guru-sma" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> SMA
+              </button>
+              <button onclick="switchAdminTab('guru-emis')" id="btn-tab-guru-emis" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> EMIS
+              </button>
+            </div>
+          </div>
+
+          <!-- Dropdown Tendik -->
+          <div class="space-y-1">
+            <button onclick="toggleTendikMenu()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-white">
+              <span class="flex items-center gap-3">
+                <i class="fa-solid fa-user-gear w-5"></i> Data Tendik
+              </span>
+              <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" id="icon-arrow-tendik"></i>
+            </button>
+            <div id="submenu-tendik" class="hidden pl-9 space-y-1 transition-all duration-300">
+              <button onclick="switchAdminTab('tendik-sd')" id="btn-tab-tendik-sd" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> SD
+              </button>
+              <button onclick="switchAdminTab('tendik-smp')" id="btn-tab-tendik-smp" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> SMP
+              </button>
+              <button onclick="switchAdminTab('tendik-sma')" id="btn-tab-tendik-sma" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> SMA
+              </button>
+              <button onclick="switchAdminTab('tendik-emis')" id="btn-tab-tendik-emis" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> EMIS
+              </button>
+            </div>
+          </div>
+
+          <button onclick="switchAdminTab('db-settings')" id="btn-tab-db-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-database w-5"></i> Setup Database
+          </button>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+          <div class="flex items-center gap-3 mb-3 p-2 bg-slate-800/30 rounded-xl">
+            <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-xs" id="admin-initial">A</div>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-xs font-bold truncate" id="admin-name">Admin</h2>
+              <p class="text-[10px] text-slate-400 truncate" id="admin-email">admin@dapodik.id</p>
+            </div>
+          </div>
+          <button onclick="logout()" class="w-full py-2.5 px-4 bg-rose-600/15 hover:bg-rose-600/20 text-rose-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i> Keluar Aplikasi
+          </button>
+        </div>
+      </aside>
+
+      <!-- Konten Utama Admin -->
+      <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2" id="admin-page-title">
+            <i class="fa-solid fa-chart-pie text-indigo-600"></i> Ringkasan Sistem
+          </h2>
+          <div class="text-xs text-slate-500 font-semibold flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg">
+            <i class="fa-solid fa-circle text-emerald-500 animate-pulse"></i> DB Terhubung: <span id="current-ss-name" class="text-slate-800 truncate max-w-[120px]">Memuat...</span>
+          </div>
+        </header>
+
+        <section class="flex-1 p-6 overflow-y-auto custom-scrollbar" id="admin-view-area">
+          <!-- Content diisi via JS -->
+        </section>
+      </main>
+    </div>
+
+    <!-- MODAL DINAMIS UNTUK FORM -->
+    <div id="admin-crud-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden">
+      <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+          <h3 class="font-bold text-slate-800" id="crud-modal-title">Form Input Data</h3>
+          <button onclick="closeCrudModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <form id="crud-dynamic-form" onsubmit="handleCrudSubmit(event)" class="flex-1 overflow-y-auto custom-scrollbar p-6">
+          <input type="hidden" id="crud-row-num">
+          <div id="crud-fields-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Fields generated dynamically -->
+          </div>
+          <div class="pt-6 mt-6 border-t border-slate-100 flex justify-end gap-3">
+            <button type="button" onclick="closeCrudModal()" class="px-5 py-2.5 text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all">Batal</button>
+            <button type="submit" class="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow shadow-indigo-600/30 transition-all">Simpan Data</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
+  <!-- ======================================================================= -->
+  <!-- 3. COMPONENT DASHBOARD SISWA (CompDashboardSiswa.html) -->
+  <!-- ======================================================================= -->
+  <template id="temp-db-siswa">
+    <div class="flex-1 flex flex-col min-h-screen bg-slate-50 animate-fade-in">
+      <header class="bg-indigo-950 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="siswa-logo-container" class="p-2 bg-indigo-700/50 rounded-xl w-11 h-11 flex items-center justify-center overflow-hidden">
+              <i id="siswa-default-icon" class="fa-solid fa-graduation-cap text-white text-lg"></i>
+              <img id="siswa-custom-logo" class="hidden w-full h-full object-cover rounded-lg" src="" alt="Logo Sekolah">
+            </div>
+            <div>
+              <h1 class="font-bold text-sm leading-tight" id="siswa-nav-title">SISWA PORTAL</h1>
+              <p class="text-[9px] uppercase tracking-wider text-indigo-300" id="siswa-nav-subtitle">Dapodik Akademik</p>
+            </div>
+          </div>
+          <button onclick="logout()" class="px-3 py-1.5 bg-indigo-800 hover:bg-rose-600 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5">
+            Keluar <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+        <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+          <div class="absolute right-0 bottom-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
+          <h2 class="text-xl font-bold">Halo, <span id="siswa-display-name">Siswa</span>!</h2>
+          <p class="text-xs text-indigo-200 mt-1 max-w-lg leading-relaxed">Selamat datang di Portal Siswa Dapodik. Di sini Anda dapat memantau profil akademik dan detail pendaftaran Anda secara langsung.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+            <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-3xl font-extrabold mb-4" id="siswa-avatar">S</div>
+            <h3 class="font-bold text-slate-800 text-sm" id="siswa-profile-name">Memuat nama...</h3>
+            <p class="text-xs text-slate-500 mt-1" id="siswa-profile-nisn">ID Siswa: -</p>
+            <div class="mt-4 px-3 py-1 bg-emerald-50 text-emerald-600 font-bold text-[10px] rounded-full uppercase">Siswa Aktif</div>
+            <div class="mt-2 text-[10px] text-slate-400 font-semibold uppercase tracking-wider" id="siswa-detected-level">Jenjang: Memuat...</div>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm md:col-span-2">
+            <h3 class="font-bold text-slate-800 text-sm mb-4 pb-2 border-b border-slate-100"><i class="fa-solid fa-address-card text-indigo-600 mr-1.5"></i>Data Akademik Lengkap</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs max-h-[60vh] overflow-y-auto custom-scrollbar p-1" id="siswa-academic-data">
+              <p class="text-slate-400 py-4 col-span-2 text-center animate-pulse">Mengunduh profil siswa...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </template>
+
+  <!-- ======================================================================= -->
+  <!-- 4. COMPONENT DASHBOARD GURU (CompDashboardGuru.html) -->
+  <!-- ======================================================================= -->
+  <template id="temp-db-guru">
+    <div class="flex-1 flex flex-col min-h-screen bg-slate-50 animate-fade-in">
+      <header class="bg-emerald-950 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="guru-logo-container" class="p-2 bg-emerald-700/50 rounded-xl w-11 h-11 flex items-center justify-center overflow-hidden">
+              <i id="guru-default-icon" class="fa-solid fa-chalkboard-user text-white text-lg"></i>
+              <img id="guru-custom-logo" class="hidden w-full h-full object-cover rounded-lg" src="" alt="Logo Sekolah">
+            </div>
+            <div>
+              <h1 class="font-bold text-sm leading-tight" id="guru-nav-title">GURU PORTAL</h1>
+              <p class="text-[9px] uppercase tracking-wider text-emerald-300" id="guru-nav-subtitle">Dapodik Pendidik</p>
+            </div>
+          </div>
+          <button onclick="logout()" class="px-3 py-1.5 bg-emerald-800 hover:bg-rose-600 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5">
+            Keluar <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+        <div class="bg-gradient-to-r from-emerald-700 to-emerald-900 text-white p-6 rounded-2xl shadow-lg">
+          <h2 class="text-xl font-bold">Selamat Mengajar, <span id="guru-display-name">Guru</span>!</h2>
+          <p class="text-xs text-emerald-100 mt-1 max-w-lg leading-relaxed">Portal ini memberikan akses untuk mengelola data penugasan Anda dan melihat daftar nama kolega maupun penugasan resmi.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center self-start">
+            <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 text-3xl font-extrabold mb-4" id="guru-avatar">G</div>
+            <h3 class="font-bold text-slate-800 text-sm" id="guru-profile-name">Memuat nama...</h3>
+            <p class="text-xs text-slate-500 mt-1" id="guru-profile-nuptk">NUPTK: -</p>
+            <div class="mt-4 px-3 py-1 bg-indigo-50 text-indigo-600 font-bold text-[10px] rounded-full uppercase">Pendidik Aktif</div>
+            <div class="mt-2 text-[10px] text-slate-400 font-semibold uppercase tracking-wider" id="guru-detected-level">Jenjang: Memuat...</div>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm md:col-span-2">
+            <h3 class="font-bold text-slate-800 text-sm mb-4 pb-2 border-b border-slate-100"><i class="fa-solid fa-graduation-cap text-emerald-600 mr-1.5"></i>Profil Kepegawaian & Tugas</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs max-h-[60vh] overflow-y-auto custom-scrollbar p-1" id="guru-academic-data">
+              <p class="text-slate-400 py-4 col-span-2 text-center animate-pulse">Menghubungi database...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </template>
+
+  <!-- ======================================================================= -->
+  <!-- 5. COMPONENT DASHBOARD TENDIK (CompDashboardTendik.html) -->
+  <!-- ======================================================================= -->
+  <template id="temp-db-tendik">
+    <div class="flex-1 flex flex-col min-h-screen bg-slate-50 animate-fade-in">
+      <header class="bg-slate-800 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="tendik-logo-container" class="p-2 bg-slate-700 rounded-xl w-11 h-11 flex items-center justify-center overflow-hidden">
+              <i id="tendik-default-icon" class="fa-solid fa-user-gear text-white text-lg"></i>
+              <img id="tendik-custom-logo" class="hidden w-full h-full object-cover rounded-lg" src="" alt="Logo Sekolah">
+            </div>
+            <div>
+              <h1 class="font-bold text-sm leading-tight" id="tendik-nav-title">STAFF PORTAL</h1>
+              <p class="text-[9px] uppercase tracking-wider text-slate-400" id="tendik-nav-subtitle">Tenaga Kependidikan</p>
+            </div>
+          </div>
+          <button onclick="logout()" class="px-3 py-1.5 bg-slate-700 hover:bg-rose-600 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5">
+            Keluar <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+        <div class="bg-gradient-to-r from-slate-700 to-slate-900 text-white p-6 rounded-2xl shadow-lg">
+          <h2 class="text-xl font-bold">Selamat Bertugas, <span id="tendik-display-name">Tendik</span>!</h2>
+          <p class="text-xs text-slate-200 mt-1 max-w-lg leading-relaxed">Portal khusus Tenaga Kependidikan (TU, Kebersihan, Keamanan, Pustakawan, dll) untuk memverifikasi profil administrasi sekolah.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center self-start">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 text-3xl font-extrabold mb-4" id="tendik-avatar">T</div>
+            <h3 class="font-bold text-slate-800 text-sm" id="tendik-profile-name">Memuat nama...</h3>
+            <p class="text-xs text-slate-500 mt-1" id="tendik-profile-nip">NIP: -</p>
+            <div class="mt-4 px-3 py-1 bg-indigo-50 text-indigo-600 font-bold text-[10px] rounded-full uppercase">Staff Aktif</div>
+            <div class="mt-2 text-[10px] text-slate-400 font-semibold uppercase tracking-wider" id="tendik-detected-level">Jenjang: Memuat...</div>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm md:col-span-2">
+            <h3 class="font-bold text-slate-800 text-sm mb-4 pb-2 border-b border-slate-100"><i class="fa-solid fa-id-card-clip text-indigo-600 mr-1.5"></i>Detail Administrasi Tendik</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs max-h-[60vh] overflow-y-auto custom-scrollbar p-1" id="tendik-academic-data">
+              <p class="text-slate-400 py-4 col-span-2 text-center animate-pulse">Menghubungi database...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </template>
+
+
+  <!-- ======================================================================= -->
+  <!-- LOGIKA UTAMA SINKRONISASI SPA (index.html Script) -->
+  <!-- ======================================================================= -->
+  <script>
+    // Global State
+    let currentUser = null;
+
+    // Helper untuk mengaplikasikan logo & judul kustom yang disimpan di memori browser secara instan
+    function applyGlobalIdentity() {
+      const customTitle = localStorage.getItem('dapodik_custom_title') || "DAPODIK DIGITAL";
+      document.title = customTitle;
+    }
+
+    // Sederhana Router / Renderer
+    function showLoader(text = "Memproses...") {
+      const loaderText = document.getElementById('loader-text');
+      const loader = document.getElementById('app-loader');
+      if (loaderText) loaderText.innerText = text;
+      if (loader) {
+        loader.classList.remove('hidden');
+        loader.classList.remove('opacity-0');
+      }
+    }
+
+    function hideLoader() {
+      const loader = document.getElementById('app-loader');
+      if (loader) {
+        loader.classList.add('opacity-0');
+        setTimeout(() => {
+          loader.classList.add('hidden');
+        }, 300);
+      }
+    }
+
+    // Custom Alert System
+    function showAlert(title, message, type = "info") {
+      const alertEl = document.getElementById('custom-alert');
+      const titleEl = document.getElementById('alert-title');
+      const messageEl = document.getElementById('alert-message');
+      const containerEl = alertEl ? alertEl.querySelector('div') : null;
+      const iconContainer = document.getElementById('alert-icon-container');
+
+      if (!alertEl || !titleEl || !messageEl || !containerEl || !iconContainer) return;
+
+      titleEl.innerText = title;
+      messageEl.innerText = message;
+
+      // Reset style
+      containerEl.className = "bg-white border-l-4 shadow-xl rounded-r-xl p-4 flex items-start gap-3";
+      
+      if (type === "success") {
+        containerEl.classList.add('border-emerald-500');
+        iconContainer.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>';
+      } else if (type === "error") {
+        containerEl.classList.add('border-rose-500');
+        iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-500 text-lg"></i>';
+      } else {
+        containerEl.classList.add('border-indigo-500');
+        iconContainer.innerHTML = '<i class="fa-solid fa-circle-info text-indigo-500 text-lg"></i>';
+      }
+
+      alertEl.classList.remove('hidden');
+      setTimeout(() => {
+        alertEl.classList.remove('translate-x-full');
+      }, 10);
+
+      // Auto close after 5 seconds
+      setTimeout(closeAlert, 5000);
+    }
+
+    function closeAlert() {
+      const alertEl = document.getElementById('custom-alert');
+      if (alertEl) {
+        alertEl.classList.add('translate-x-full');
+        setTimeout(() => {
+          alertEl.classList.add('hidden');
+        }, 300);
+      }
+    }
+
+    // Navigasi Router SPA
+    function navigateToDashboard(role) {
+      if (role === 'Admin') {
+        if (typeof renderDashboardAdmin === 'function') {
+          renderDashboardAdmin();
+        } else {
+          console.error("renderDashboardAdmin is not defined");
+        }
+      } else if (role === 'Siswa') {
+        if (typeof renderDashboardSiswa === 'function') {
+          renderDashboardSiswa();
+        } else {
+          console.error("renderDashboardSiswa is not defined");
+        }
+      } else if (role === 'Guru') {
+        if (typeof renderDashboardGuru === 'function') {
+          renderDashboardGuru();
+        } else {
+          console.error("renderDashboardGuru is not defined");
+        }
+      } else if (role === 'Tendik') {
+        if (typeof renderDashboardTendik === 'function') {
+          renderDashboardTendik();
+        } else {
+          console.error("renderDashboardTendik is not defined");
+        }
+      } else {
+        if (typeof renderLogin === 'function') {
+          renderLogin();
+        }
+      }
+    }
+
+    function logout() {
+      showLoader("Melakukan logout...");
+      localStorage.removeItem('dapodik_user');
+      currentUser = null;
+      setTimeout(() => {
+        if (typeof renderLogin === 'function') {
+          renderLogin();
+        }
+        hideLoader();
+        showAlert("Keluar Berhasil", "Anda telah keluar dari sistem.", "info");
+      }, 500);
+    }
+
+    // Jalankan inisialisasi di akhir siklus muatan agar memastikan seluruh fungsi script komponen telah siap
+    window.addEventListener('load', () => {
+      applyGlobalIdentity();
+
+      // Periksa session lokal jika ada, jika tidak, arahkan ke Login
+      const savedUser = localStorage.getItem('dapodik_user');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        navigateToDashboard(currentUser.role);
+      } else {
+        if (typeof renderLogin === 'function') {
+          renderLogin();
+        } else {
+          console.error("renderLogin is not defined on window load");
+        }
+      }
+      hideLoader();
+    });
+  </script>
+
+  <!-- ======================================================================= -->
+  <!-- JEMBATAN INTEGRASI GITHUB / VERCEL (PROXY BACKEND ENGINE) -->
+  <!-- ======================================================================= -->
+  <script>
+    // Mencegah error crash "google is not defined" saat dijalankan di server eksternal seperti GitHub / Vercel
+    if (typeof google === 'undefined') {
+      const runProxy = {
+        withSuccessHandler: function(successCallback) {
+          this.successHandler = successCallback;
+          return this;
+        },
+        withFailureHandler: function(failureCallback) {
+          this.failureHandler = failureCallback;
+          return this;
+        }
+      };
+
+      // Fungsi pusat penyaluran API REST atau simulasi database lokal
+      const routeGasCall = (functionName, args, successHandler, failureHandler) => {
+        const gasUrl = localStorage.getItem('dapodik_gas_url');
+        if (gasUrl) {
+          // Mode Jembatan Nyata: Menyalurkan permintaan REST CORS ke server Google Sheets Anda
+          fetch(gasUrl + '?action=' + functionName, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ functionName: functionName, arguments: args })
+          })
+          .then(res => res.json())
+          .then(data => successHandler(data))
+          .catch(err => {
+            failureHandler(err);
+            showAlert("Koneksi Gagal", "Gagal menghubungi Apps Script. Pastikan Web App Anda di-deploy ulang sebagai 'Anyone'!", "error");
+          });
+        } else {
+          // Mode Simulasi Lokal (Demo): Berjalan langsung di Vercel/GitHub menggunakan Mock DB
+          emulateLocalDatabase(functionName, args, successHandler);
+        }
+      };
+
+      // Daftarkan semua pemanggilan fungsi backend GAS ke proxy dinamis
+      const gasFunctions = [
+        'loginUser', 'getActiveSpreadsheetInfo', 'updateSpreadsheetId', 
+        'getSheetData', 'addData', 'updateData', 'deleteData', 'findUserAcademicProfile'
+      ];
+
+      gasFunctions.forEach(fn => {
+        runProxy[fn] = function(...args) {
+          const self = this;
+          setTimeout(() => {
+            routeGasCall(fn, args, self.successHandler || (() => {}), self.failureHandler || (() => {}));
+          }, 400);
+        };
+      });
+
+      window.google = {
+        script: {
+          run: runProxy
+        }
+      };
+
+      // Tampilkan panel pengaturan API Bridge secara otomatis jika berada di luar GAS
+      window.addEventListener('DOMContentLoaded', () => {
+        const bridgeContainer = document.getElementById('gas-bridge-container');
+        if (bridgeContainer) {
+          bridgeContainer.classList.remove('hidden');
+        }
+        const urlInput = document.getElementById('gas-url-input');
+        if (urlInput) {
+          urlInput.value = localStorage.getItem('dapodik_gas_url') || "";
+        }
+      });
+    }
+
+    // Pengaturan Panel Input Jembatan
+    function toggleGasBridgeInput() {
+      const form = document.getElementById('gas-url-form');
+      if (form) form.classList.toggle('hidden');
+    }
+
+    function saveGasUrl() {
+      const url = document.getElementById('gas-url-input').value.trim();
+      if (!url) {
+        showAlert("Validasi Gagal", "Tautan URL tidak boleh kosong!", "error");
+        return;
+      }
+      localStorage.setItem('dapodik_gas_url', url);
+      showAlert("Tersambung", "Berhasil menyimpan konfigurasi jembatan database real-time!", "success");
+      toggleGasBridgeInput();
+    }
+
+    function clearGasUrl() {
+      localStorage.removeItem('dapodik_gas_url');
+      document.getElementById('gas-url-input').value = "";
+      showAlert("Mode Demo Lokal", "Menggunakan database simulasi browser secara lokal.", "info");
+      toggleGasBridgeInput();
+    }
+
+    // ==================== ENGINE SIMULASI DATABASE LOKAL (MOCK DB) ==================== //
+    function emulateLocalDatabase(functionName, args, successHandler) {
+      if (!localStorage.getItem('mock_db_Users')) {
+        localStorage.setItem('mock_db_Users', JSON.stringify([
+          { UID: "ADM01", Username: "admin", Password: "123", Role: "Admin", Nama: "Administrator Demo", Email: "admin@dapodik.id", Status: "Aktif" },
+          { UID: "SIS01", Username: "siswa", Password: "123", Role: "Siswa", Nama: "Andi Pratama", Email: "andi@dapodik.id", Status: "Aktif" }
+        ]));
+        localStorage.setItem('mock_db_Siswa_SD', JSON.stringify([
+          { NISN: "10001", Nama: "Andi Pratama", Kelas: "VI", Alamat: "Jl. Merdeka Raya No. 24", "No HP": "08123456789", "No KK": "320123456789", "Tanggal Lahir": "12-05-2014" }
+        ]));
+        localStorage.setItem('mock_db_Guru_SD', JSON.stringify([
+          { NUPTK: "20001", Nama: "Budi Santoso, S.Pd", "Mata Pelajaran": "Bahasa Indonesia", "L/P": "L", Email: "budi@dapodik.id", "No HP": "08529999111", "Status Kepegawaian": "PNS" }
+        ]));
+        localStorage.setItem('mock_db_Tendik_SD', JSON.stringify([
+          { NIP: "30001", Nama: "Siti Aminah", Jabatan: "Bendahara", "L/P": "P", Email: "siti@dapodik.id", "No HP": "08192222333", Bagian: "Tata Usaha" }
+        ]));
+      }
+
+      if (functionName === 'loginUser') {
+        const username = args[0];
+        const password = args[1];
+        const users = JSON.parse(localStorage.getItem('mock_db_Users') || '[]');
+        const found = users.find(u => u.Username === username && u.Password === password);
+        
+        if (found) {
+          successHandler({
+            success: true,
+            user: { uid: found.UID, username: found.Username, role: found.Role, nama: found.Nama, email: found.Email }
+          });
+        } else {
+          successHandler({ 
+            success: false, 
+            message: "Akses Ditolak! Coba gunakan Username 'admin' atau 'siswa' dengan Password '123' (Mode Demo Lokal)." 
+          });
+        }
+      }
+      else if (functionName === 'getActiveSpreadsheetInfo') {
+        successHandler({
+          activeId: "id-spreadsheet-utama-demo",
+          name: "Spreadsheet Utama (Mode Demo)",
+          siswaId: "id-spreadsheet-siswa-demo",
+          siswaName: "Spreadsheet Siswa (Mode Demo)",
+          guruId: "id-spreadsheet-guru-demo",
+          guruName: "Spreadsheet Guru (Mode Demo)",
+          tendikId: "id-spreadsheet-tendik-demo",
+          tendikName: "Spreadsheet Tendik (Mode Demo)"
+        });
+      }
+      else if (functionName === 'updateSpreadsheetId') {
+        successHandler({ success: true, message: "Database tersimpan dan terhubung disimulasikan lokal!" });
+      }
+      else if (functionName === 'getSheetData') {
+        const sheetName = args[0];
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        let headers = [];
+        
+        if (sheetName === "Users") headers = ["UID", "Username", "Password", "Role", "Nama", "Email", "Status"];
+        else if (sheetName.startsWith("Siswa")) headers = ["NISN", "Nama", "Kelas", "Alamat", "No HP", "No KK", "Tanggal Lahir"];
+        else if (sheetName.startsWith("Guru")) headers = ["NUPTK", "Nama", "Mata Pelajaran", "L/P", "Email", "No HP", "Status Kepegawaian"];
+        else if (sheetName.startsWith("Tendik")) headers = ["NIP", "Nama", "Jabatan", "L/P", "Email", "No HP", "Bagian"];
+
+        const enrichedRows = localRows.map((row, i) => ({ ...row, _rowNum: i + 2 }));
+        successHandler({ success: true, headers: headers, data: enrichedRows });
+      }
+      else if (functionName === 'addData') {
+        const sheetName = args[0];
+        const record = args[1];
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        localRows.push(record);
+        localStorage.setItem('mock_db_' + sheetName, JSON.stringify(localRows));
+        successHandler({ success: true, message: "Berhasil menambahkan baris secara lokal!" });
+      }
+      else if (functionName === 'updateData') {
+        const sheetName = args[0];
+        const rowNum = parseInt(args[1]);
+        const record = args[2];
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        const idx = rowNum - 2;
+        if (localRows[idx]) {
+          localRows[idx] = { ...localRows[idx], ...record };
+          localStorage.setItem('mock_db_' + sheetName, JSON.stringify(localRows));
+        }
+        successHandler({ success: true, message: "Berhasil memperbarui baris secara lokal!" });
+      }
+      else if (functionName === 'deleteData') {
+        const sheetName = args[0];
+        const rowNum = parseInt(args[1]);
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        const idx = rowNum - 2;
+        localRows.splice(idx, 1);
+        localStorage.setItem('mock_db_' + sheetName, JSON.stringify(localRows));
+        successHandler({ success: true, message: "Berhasil menghapus baris secara lokal!" });
+      }
+      else if (functionName === 'findUserAcademicProfile') {
+        const role = args[0];
+        const fullName = args[1];
+        let matchRecord = null;
+        let targetSheet = "";
+        let headers = [];
+        
+        const subTabs = role === "Siswa" ? ["Siswa_SD", "Siswa_SMP", "Siswa_SMA", "Siswa_EMIS"] :
+                        role === "Guru" ? ["Guru_SD", "Guru_SMP", "Guru_SMA", "Guru_EMIS"] :
+                        ["Tendik_SD", "Tendik_SMP", "Tendik_SMA", "Tendik_EMIS"];
+
+        for (let sh of subTabs) {
+          const rows = JSON.parse(localStorage.getItem('mock_db_' + sh) || '[]');
+          matchRecord = rows.find(item => item.Nama && item.Nama.toLowerCase().trim() === fullName.toLowerCase().trim());
+          if (matchRecord) {
+            targetSheet = sh;
+            if (role === "Siswa") headers = ["NISN", "Nama", "Kelas", "Alamat", "No HP", "No KK", "Tanggal Lahir"];
+            else if (role === "Guru") headers = ["NUPTK", "Nama", "Mata Pelajaran", "L/P", "Email", "No HP", "Status Kepegawaian"];
+            else headers = ["NIP", "Nama", "Jabatan", "L/P", "Email", "No HP", "Bagian"];
+            break;
+          }
+        }
+
+        if (matchRecord) {
+          successHandler({ success: true, headers: headers, data: matchRecord, foundInSheet: targetSheet });
+        } else {
+          successHandler({ success: false, message: "Profil tidak ditemukan secara lokal." });
+        }
+      }
+    }
+  </script>
+</body>
+</html>
