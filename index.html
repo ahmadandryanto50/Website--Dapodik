@@ -436,7 +436,7 @@
     // Global Configuration (APP_CONFIG) untuk menaruh URL Apps Script secara langsung
     window.APP_CONFIG = {
       // ⚠️ SILAKAN TEMPELKAN URL DEPLOYMENT WEB APP GOOGLE APPS SCRIPT ANDA DI SINI:
-      scriptUrl: "https://script.google.com/macros/s/AKfycbwnuXfqi27_pCA8SI1q_ac6BD9F-plU50p8O-FtmmjB--NC3hPaxox7hr_gzn6FHlKkbw/exec"
+      scriptUrl: "https://script.google.com/a/macros/admin.smp.belajar.id/s/AKfycbwnuXfqi27_pCA8SI1q_ac6BD9F-plU50p8O-FtmmjB--NC3hPaxox7hr_gzn6FHlKkbw/exec"
     };
 
     // Global State
@@ -1872,4 +1872,282 @@
                   </div>
                   <input type="text" id="input-db-tendik" required class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="Masukkan ID/URL Spreadsheet Tendik (Kosongkan jika ingin gabung ke Utama)">
                 </div>
-                <button type="submit" class="w-full md:w-auto px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs
+                <button type="submit" class="w-full md:w-auto px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow-sm transition-all whitespace-nowrap">
+                  Hubungkan Tendik <i class="fa-solid fa-cloud-arrow-up ml-1"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h4 class="font-bold text-slate-800 text-xs mb-3 flex items-center gap-1.5 text-indigo-600">
+              <i class="fa-solid fa-circle-info"></i> Petunjuk Setup & Cara Ekstrak ID Otomatis:
+            </h4>
+            <ul class="list-disc pl-5 text-[11px] text-slate-500 space-y-2 leading-relaxed">
+              <li><b>URL Otomatis Terdeteksi:</b> Anda bebas menempelkan URL lengkap spreadsheet browser Anda secara langsung (misalnya: <code class="bg-slate-100 p-0.5 px-1.5 rounded font-mono text-indigo-600">https://docs.google.com/spreadsheets/d/.../edit</code>). Sistem web secara cerdas akan menyaring dan mengekstrak ID-nya secara otomatis di latar belakang!</li>
+              <li><b>Prinsip Fallback Database:</b> Jika ID khusus untuk <i>Siswa</i>, <i>Guru</i>, atau <i>Tendik</i> dikosongkan/belum diisi, sistem otomatis akan menyimpan seluruh data tersebut pada <b>Spreadsheet Utama</b> secara default.</li>
+              <li><b>Setup Header Otomatis:</b> Saat Anda berhasil menghubungkan database baru, sistem akan mengotomatisasi pembuatan tab sheet beserta penulisan struktur header kolom yang diperlukan sekolah secara instan.</li>
+            </ul>
+          </div>
+        </div>
+      `;
+
+      google.script.run
+        .withSuccessHandler((info) => {
+          document.getElementById('input-db-default').value = info.activeId;
+          document.getElementById('input-db-siswa').value = info.siswaId === info.activeId ? "" : info.siswaId;
+          document.getElementById('input-db-guru').value = info.guruId === info.activeId ? "" : info.guruId;
+          document.getElementById('input-db-tendik').value = info.tendikId === info.activeId ? "" : info.tendikId;
+
+          updateBadgeStatus('badge-db-default', info.name, 'indigo');
+          updateBadgeStatus('badge-db-siswa', info.siswaId && info.siswaId !== info.activeId ? info.siswaName : 'Gabung DB Utama', 'red');
+          updateBadgeStatus('badge-db-guru', info.guruId && info.guruId !== info.activeId ? info.guruName : 'Gabung DB Utama', 'emerald');
+          updateBadgeStatus('badge-db-tendik', info.tendikId && info.tendikId !== info.activeId ? info.tendikName : 'Gabung DB Utama', 'amber');
+        })
+        .getActiveSpreadsheetInfo();
+    }
+  </script>
+
+  <!-- ======================================================================= -->
+  <!-- JEMBATAN INTEGRASI GITHUB / VERCEL (PROXY BACKEND ENGINE) -->
+  <!-- ======================================================================= -->
+  <script>
+    // Mencegah error crash "google is not defined" saat dijalankan di server eksternal seperti GitHub / Vercel
+    if (typeof google === 'undefined') {
+      const createProxyInstance = () => {
+        return {
+          successHandler: null,
+          failureHandler: null,
+          withSuccessHandler: function(successCallback) {
+            this.successHandler = successCallback;
+            return this;
+          },
+          withFailureHandler: function(failureCallback) {
+            this.failureHandler = failureCallback;
+            return this;
+          }
+        };
+      };
+
+      const runProxy = createProxyInstance();
+      const gasFunctions = [
+        'loginUser', 'getActiveSpreadsheetInfo', 'updateSpreadsheetId', 
+        'getSheetData', 'addData', 'updateData', 'deleteData', 'findUserAcademicProfile'
+      ];
+
+      gasFunctions.forEach(fn => {
+        runProxy[fn] = function(...args) {
+          const success = this.successHandler || (() => {});
+          const failure = this.failureHandler || (() => {});
+          
+          // Reset handlers segera untuk panggilan asinkronus berikutnya guna mencegah polusi state
+          this.successHandler = null;
+          this.failureHandler = null;
+
+          setTimeout(() => {
+            routeGasCall(fn, args, success, failure);
+          }, 100);
+        };
+      });
+
+      window.google = {
+        script: {
+          run: runProxy
+        }
+      };
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const bridgeContainer = document.getElementById('gas-bridge-container');
+        if (bridgeContainer) {
+          bridgeContainer.classList.remove('hidden');
+        }
+        const urlInput = document.getElementById('gas-url-input');
+        if (urlInput) {
+          urlInput.value = localStorage.getItem('dapodik_gas_url') || "";
+        }
+      });
+    }
+
+    const routeGasCall = (functionName, args, successHandler, failureHandler) => {
+      const gasUrl = getActiveGasUrl();
+      if (gasUrl) {
+        // PERBAIKAN CORS UTAMA: Kirim request text/plain untuk mengindari Preflight precheck dari browser
+        fetch(gasUrl + '?action=' + functionName, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ functionName: functionName, arguments: args })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("HTTP Error " + res.status);
+          return res.json();
+        })
+        .then(data => {
+          if (data && data.success !== undefined) {
+            successHandler(data);
+          } else {
+            successHandler(data);
+          }
+        })
+        .catch(err => {
+          if (typeof failureHandler === 'function') {
+            failureHandler(err);
+          }
+          console.error("CORS fetch error:", err);
+          showAlert("Koneksi Gagal", "Gagal menghubungi Apps Script. Pastikan Web App Anda di-deploy ulang sebagai 'Anyone' dan file Code.gs Anda telah diperbarui!", "error");
+        });
+      } else {
+        emulateLocalDatabase(functionName, args, successHandler);
+      }
+    };
+
+    function emulateLocalDatabase(functionName, args, successHandler) {
+      if (!localStorage.getItem('mock_db_Users')) {
+        localStorage.setItem('mock_db_Users', JSON.stringify([
+          { UID: "ADM01", Username: "admin", Password: "123", Role: "Admin", Nama: "Administrator Demo", Email: "admin@dapodik.id", Status: "Aktif" },
+          { UID: "SIS01", Username: "siswa", Password: "123", Role: "Siswa", Nama: "Andi Pratama", Email: "andi@dapodik.id", Status: "Aktif" }
+        ]));
+        localStorage.setItem('mock_db_Siswa_SD', JSON.stringify([
+          { NISN: "10001", Nama: "Andi Pratama", Kelas: "VI", Alamat: "Jl. Merdeka Raya No. 24", "No HP": "08123456789", "No KK": "320123456789", "Tanggal Lahir": "12-05-2014" }
+        ]));
+        localStorage.setItem('mock_db_Guru_SD', JSON.stringify([
+          { NUPTK: "20001", Nama: "Budi Santoso, S.Pd", "Mata Pelajaran": "Bahasa Indonesia", "L/P": "L", Email: "budi@dapodik.id", "No HP": "08529999111", "Status Kepegawaian": "PNS" }
+        ]));
+        localStorage.setItem('mock_db_Tendik_SD', JSON.stringify([
+          { NIP: "30001", Nama: "Siti Aminah", Jabatan: "Bendahara", "L/P": "P", Email: "siti@dapodik.id", "No HP": "08192222333", Bagian: "Tata Usaha" }
+        ]));
+      }
+
+      if (functionName === 'loginUser') {
+        const username = args[0];
+        const password = args[1];
+        const users = JSON.parse(localStorage.getItem('mock_db_Users') || '[]');
+        const found = users.find(u => u.Username === username && u.Password === password);
+        
+        if (found) {
+          successHandler({
+            success: true,
+            user: { uid: found.UID, username: found.Username, role: found.Role, nama: found.Nama, email: found.Email }
+          });
+        } else {
+          successHandler({ 
+            success: false, 
+            message: "Akses Ditolak! Coba Username 'admin' / Password '123' (Mode Demo)." 
+          });
+        }
+      }
+      else if (functionName === 'getActiveSpreadsheetInfo') {
+        successHandler({
+          activeId: "id-spreadsheet-utama-demo",
+          name: "Spreadsheet Utama (Mode Demo)",
+          siswaId: "id-spreadsheet-siswa-demo",
+          siswaName: "Spreadsheet Siswa (Mode Demo)",
+          guruId: "id-spreadsheet-guru-demo",
+          guruName: "Spreadsheet Guru (Mode Demo)",
+          tendikId: "id-spreadsheet-tendik-demo",
+          tendikName: "Spreadsheet Tendik (Mode Demo)"
+        });
+      }
+      else if (functionName === 'updateSpreadsheetId') {
+        successHandler({ success: true, message: "Database simulasi lokal berhasil terhubung!" });
+      }
+      else if (functionName === 'getSheetData') {
+        const sheetName = args[0];
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        let headers = [];
+        
+        if (sheetName === "Users") headers = ["UID", "Username", "Password", "Role", "Nama", "Email", "Status"];
+        else if (sheetName.startsWith("Siswa")) headers = ["NISN", "Nama", "Kelas", "Alamat", "No HP", "No KK", "Tanggal Lahir"];
+        else if (sheetName.startsWith("Guru")) headers = ["NUPTK", "Nama", "Mata Pelajaran", "L/P", "Email", "No HP", "Status Kepegawaian"];
+        else if (sheetName.startsWith("Tendik")) headers = ["NIP", "Nama", "Jabatan", "L/P", "Email", "No HP", "Bagian"];
+
+        const enrichedRows = localRows.map((row, i) => ({ ...row, _rowNum: i + 2 }));
+        successHandler({ success: true, headers: headers, data: enrichedRows });
+      }
+      else if (functionName === 'addData') {
+        const sheetName = args[0];
+        const record = args[1];
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        localRows.push(record);
+        localStorage.setItem('mock_db_' + sheetName, JSON.stringify(localRows));
+        successHandler({ success: true, message: "Data berhasil ditambahkan!" });
+      }
+      else if (functionName === 'updateData') {
+        const sheetName = args[0];
+        const rowNum = parseInt(args[1]);
+        const record = args[2];
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        const idx = rowNum - 2;
+        if (localRows[idx]) {
+          localRows[idx] = { ...localRows[idx], ...record };
+          localStorage.setItem('mock_db_' + sheetName, JSON.stringify(localRows));
+        }
+        successHandler({ success: true, message: "Data berhasil diperbarui!" });
+      }
+      else if (functionName === 'deleteData') {
+        const sheetName = args[0];
+        const rowNum = parseInt(args[1]);
+        const localRows = JSON.parse(localStorage.getItem('mock_db_' + sheetName) || '[]');
+        const idx = rowNum - 2;
+        localRows.splice(idx, 1);
+        localStorage.setItem('mock_db_' + sheetName, JSON.stringify(localRows));
+        successHandler({ success: true, message: "Data berhasil dihapus!" });
+      }
+      else if (functionName === 'findUserAcademicProfile') {
+        const role = args[0];
+        const fullName = args[1];
+        let matchRecord = null;
+        let targetSheet = "";
+        let headers = [];
+        
+        const subTabs = role === "Siswa" ? ["Siswa_SD", "Siswa_SMP", "Siswa_SMA", "Siswa_EMIS"] :
+                        role === "Guru" ? ["Guru_SD", "Guru_SMP", "Guru_SMA", "Guru_EMIS"] :
+                        ["Tendik_SD", "Tendik_SMP", "Tendik_SMA", "Tendik_EMIS"];
+
+        for (let sh of subTabs) {
+          const rows = JSON.parse(localStorage.getItem('mock_db_' + sh) || '[]');
+          matchRecord = rows.find(item => item.Nama && item.Nama.toLowerCase().trim() === fullName.toLowerCase().trim());
+          if (matchRecord) {
+            targetSheet = sh;
+            if (role === "Siswa") headers = ["NISN", "Nama", "Kelas", "Alamat", "No HP", "No KK", "Tanggal Lahir"];
+            else if (role === "Guru") headers = ["NUPTK", "Nama", "Mata Pelajaran", "L/P", "Email", "No HP", "Status Kepegawaian"];
+            else headers = ["NIP", "Nama", "Jabatan", "L/P", "Email", "No HP", "Bagian"];
+            break;
+          }
+        }
+
+        if (matchRecord) {
+          successHandler({ success: true, headers: headers, data: matchRecord, foundInSheet: targetSheet });
+        } else {
+          successHandler({ success: false, message: "Profil tidak ditemukan secara lokal." });
+        }
+      }
+    }
+  </script>
+
+  <!-- JALANKAN INISIALISASI SETELAH SEMUA ELEMEN TERDAFTAR -->
+  <script>
+    window.addEventListener('load', () => {
+      applyGlobalIdentity();
+
+      const savedUser = localStorage.getItem('dapodik_user');
+      if (savedUser) {
+        try {
+          currentUser = JSON.parse(savedUser);
+          navigateToDashboard(currentUser.role);
+        } catch (e) {
+          localStorage.removeItem('dapodik_user');
+          renderLogin();
+        }
+      } else {
+        if (typeof renderLogin === 'function') {
+          renderLogin();
+        } else {
+          console.error("renderLogin is not defined on window load");
+        }
+      }
+      hideLoader();
+    });
+  </script>
+</body>
+</html>
