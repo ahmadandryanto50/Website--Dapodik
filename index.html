@@ -307,7 +307,7 @@
         <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div class="absolute right-0 bottom-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
           <h2 class="text-xl font-bold">Halo, <span id="siswa-display-name">Siswa</span>!</h2>
-          <p class="text-xs text-indigo-200 mt-1 max-w-lg leading-relaxed">Selamat datang di Portal Siswa Dapodik. Di sini Anda dapat memantau profil akademik dan detail pendaftaran Anda secara langsung.</p>
+          <p class="text-xs text-indigo-200 mt-1 max-w-lg leading-relaxed">Selamat datang di Portal Siswa Dapodik. Di sini Anda dapat memantau profil akademik and detail pendaftaran Anda secara langsung.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -436,7 +436,7 @@
     // Global Configuration (APP_CONFIG) untuk menaruh URL Apps Script secara langsung
     window.APP_CONFIG = {
       // ⚠️ SILAKAN TEMPELKAN URL DEPLOYMENT WEB APP GOOGLE APPS SCRIPT ANDA DI SINI:
-      scriptUrl: ""
+      scriptUrl: "https://script.google.com/macros/s/AKfycbyT42mnLms3dIVhaRua7k2iojoK5QUKQnSvc9fb9ZrbDFkCJ-oJsDvbCFfGuNB6zVpYKg/exec"
     };
 
     // Global State
@@ -802,4 +802,1074 @@
       }
     }
 
-    // ... sisa kode tidak berubah ...
+    function toggleGuruMenu() {
+      const submenu = document.getElementById('submenu-guru');
+      const arrow = document.getElementById('icon-arrow-guru');
+      if (submenu && arrow) {
+        submenu.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+      }
+    }
+
+    function toggleTendikMenu() {
+      const submenu = document.getElementById('submenu-tendik');
+      const arrow = document.getElementById('icon-arrow-tendik');
+      if (submenu && arrow) {
+        submenu.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+      }
+    }
+
+    function switchAdminTab(tabName) {
+      activeAdminTab = tabName;
+      const viewArea = document.getElementById('admin-view-area');
+      const pageTitle = document.getElementById('admin-page-title');
+      
+      const tabs = [
+        'overview', 
+        'siswa-sd', 'siswa-smp', 'siswa-sma', 'siswa-emis', 
+        'guru-sd', 'guru-smp', 'guru-sma', 'guru-emis', 
+        'tendik-sd', 'tendik-smp', 'tendik-sma', 'tendik-emis', 
+        'db-settings'
+      ];
+      
+      tabs.forEach(t => {
+        const btn = document.getElementById(`btn-tab-${t}`);
+        if (btn) {
+          if (t.startsWith('siswa-') || t.startsWith('guru-') || t.startsWith('tendik-')) {
+            btn.className = "w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-2";
+          } else {
+            btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-white";
+          }
+        }
+      });
+
+      const activeBtn = document.getElementById(`btn-tab-${tabName}`);
+      if (activeBtn) {
+        if (tabName.startsWith('siswa-') || tabName.startsWith('guru-') || tabName.startsWith('tendik-')) {
+          activeBtn.className = "w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-indigo-400 bg-slate-800/80 flex items-center gap-2";
+        } else {
+          activeBtn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-indigo-400 bg-slate-800/50";
+        }
+      }
+
+      if (tabName.startsWith('siswa-')) {
+        const submenu = document.getElementById('submenu-siswa');
+        if (submenu) {
+          submenu.classList.remove('hidden');
+          document.getElementById('icon-arrow-siswa').classList.add('rotate-180');
+        }
+      } else if (tabName.startsWith('guru-')) {
+        const submenu = document.getElementById('submenu-guru');
+        if (submenu) {
+          submenu.classList.remove('hidden');
+          document.getElementById('icon-arrow-guru').classList.add('rotate-180');
+        }
+      } else if (tabName.startsWith('tendik-')) {
+        const submenu = document.getElementById('submenu-tendik');
+        if (submenu) {
+          submenu.classList.remove('hidden');
+          document.getElementById('icon-arrow-tendik').classList.add('rotate-180');
+        }
+      }
+
+      if (tabName === "overview") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-chart-pie text-indigo-600"></i> Ringkasan Sistem';
+        renderOverviewTab(viewArea);
+      } 
+      else if (tabName === "siswa-sd") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-graduate text-red-500"></i> Kelola Data Siswa SD';
+        renderCrudTab(viewArea, 'Siswa_SD');
+      } else if (tabName === "siswa-smp") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-graduate text-blue-500"></i> Kelola Data Siswa SMP';
+        renderCrudTab(viewArea, 'Siswa_SMP');
+      } else if (tabName === "siswa-sma") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-graduate text-indigo-500"></i> Kelola Data Siswa SMA';
+        renderCrudTab(viewArea, 'Siswa_SMA');
+      } else if (tabName === "siswa-emis") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-graduate text-emerald-500"></i> Kelola Data Siswa EMIS';
+        renderCrudTab(viewArea, 'Siswa_EMIS');
+      } 
+      else if (tabName === "guru-sd") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-chalkboard-user text-red-500"></i> Kelola Data Guru SD';
+        renderCrudTab(viewArea, 'Guru_SD');
+      } else if (tabName === "guru-smp") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-chalkboard-user text-blue-500"></i> Kelola Data Guru SMP';
+        renderCrudTab(viewArea, 'Guru_SMP');
+      } else if (tabName === "guru-sma") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-chalkboard-user text-indigo-500"></i> Kelola Data Guru SMA';
+        renderCrudTab(viewArea, 'Guru_SMA');
+      } else if (tabName === "guru-emis") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-chalkboard-user text-emerald-500"></i> Kelola Data Guru EMIS';
+        renderCrudTab(viewArea, 'Guru_EMIS');
+      }
+      else if (tabName === "tendik-sd") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-gear text-red-500"></i> Kelola Data Tendik SD';
+        renderCrudTab(viewArea, 'Tendik_SD');
+      } else if (tabName === "tendik-smp") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-gear text-blue-500"></i> Kelola Data Tendik SMP';
+        renderCrudTab(viewArea, 'Tendik_SMP');
+      } else if (tabName === "tendik-sma") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-gear text-indigo-500"></i> Kelola Data Tendik SMA';
+        renderCrudTab(viewArea, 'Tendik_SMA');
+      } else if (tabName === "tendik-emis") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-user-gear text-emerald-500"></i> Kelola Data Tendik EMIS';
+        renderCrudTab(viewArea, 'Tendik_EMIS');
+      }
+      else if (tabName === "db-settings") {
+        pageTitle.innerHTML = '<i class="fa-solid fa-database text-indigo-600"></i> Setup Database';
+        renderSettingsTab(viewArea);
+      }
+    }
+
+    function preloadOverviewStats(callback) {
+      if (isOverviewDataFetched) {
+        if (callback) callback();
+        return;
+      }
+
+      const targetSheets = [
+        { key: 'siswa_sd', name: 'Siswa_SD' }, { key: 'siswa_smp', name: 'Siswa_SMP' },
+        { key: 'siswa_sma', name: 'Siswa_SMA' }, { key: 'siswa_emis', name: 'Siswa_EMIS' },
+        { key: 'guru_sd', name: 'Guru_SD' }, { key: 'guru_smp', name: 'Guru_SMP' },
+        { key: 'guru_sma', name: 'Guru_SMA' }, { key: 'guru_emis', name: 'Guru_EMIS' },
+        { key: 'tendik_sd', name: 'Tendik_SD' }, { key: 'tendik_smp', name: 'Tendik_SMP' },
+        { key: 'tendik_sma', name: 'Tendik_SMA' }, { key: 'tendik_emis', name: 'Tendik_EMIS' }
+      ];
+
+      let loadedCount = 0;
+      targetSheets.forEach(sheetItem => {
+        google.script.run
+          .withSuccessHandler((response) => {
+            if (response.success) {
+              overviewStats[sheetItem.key] = response.data.length;
+            }
+            loadedCount++;
+            if (loadedCount === targetSheets.length) {
+              isOverviewDataFetched = true;
+              if (callback) callback();
+            }
+          })
+          .withFailureHandler(() => {
+            loadedCount++;
+            if (loadedCount === targetSheets.length) {
+              isOverviewDataFetched = true;
+              if (callback) callback();
+            }
+          })
+          .getSheetData(sheetItem.name);
+      });
+    }
+
+    function updateOverviewButtonStyles() {
+      const jenjangs = ['semua', 'sd', 'smp', 'sma', 'emis'];
+      jenjangs.forEach(j => {
+        const btn = document.getElementById(`btn-ov-${j}`);
+        if (btn) {
+          if (selectedOverviewJenjang === j) {
+            btn.className = "px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow transition-all";
+          } else {
+            btn.className = "px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all";
+          }
+        }
+      });
+    }
+
+    function selectOverviewJenjang(jenjang) {
+      selectedOverviewJenjang = jenjang;
+      updateOverviewButtonStyles();
+      const statsContainer = document.getElementById('overview-stats-container');
+      
+      if (!isOverviewDataFetched) {
+        statsContainer.innerHTML = `
+          <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent mr-3"></div>
+            <p class="text-xs font-semibold text-slate-500">Memuat data dari Google Sheets...</p>
+          </div>
+        `;
+        preloadOverviewStats(() => {
+          renderSelectedStats(statsContainer, jenjang);
+        });
+      } else {
+        renderSelectedStats(statsContainer, jenjang);
+      }
+    }
+
+    function renderSelectedStats(container, jenjang) {
+      let siswaCount = 0;
+      let guruCount = 0;
+      let tendikCount = 0;
+      let titleLabel = "";
+
+      if (jenjang === "semua") {
+        siswaCount = overviewStats.siswa_sd + overviewStats.siswa_smp + overviewStats.siswa_sma + overviewStats.siswa_emis;
+        guruCount = overviewStats.guru_sd + overviewStats.guru_smp + overviewStats.guru_sma + overviewStats.guru_emis;
+        tendikCount = overviewStats.tendik_sd + overviewStats.tendik_smp + overviewStats.tendik_sma + overviewStats.tendik_emis;
+        titleLabel = "Semua Jenjang";
+      } else {
+        siswaCount = overviewStats[`siswa_${jenjang}`] || 0;
+        guruCount = overviewStats[`guru_${jenjang}`] || 0;
+        tendikCount = overviewStats[`tendik_${jenjang}`] || 0;
+        titleLabel = `Jenjang ${jenjang.toUpperCase()}`;
+      }
+
+      container.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+          <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden flex items-center justify-between">
+            <div class="absolute -right-5 -bottom-5 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div>
+              <p class="text-xs uppercase tracking-wider font-semibold opacity-80">Total Siswa (${titleLabel})</p>
+              <h3 class="text-3xl font-extrabold mt-2">${siswaCount}</h3>
+            </div>
+            <div class="p-4 bg-white/20 rounded-xl">
+              <i class="fa-solid fa-user-graduate text-2xl"></i>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden flex items-center justify-between">
+            <div class="absolute -right-5 -bottom-5 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div>
+              <p class="text-xs uppercase tracking-wider font-semibold opacity-80">Total Guru (${titleLabel})</p>
+              <h3 class="text-3xl font-extrabold mt-2">${guruCount}</h3>
+            </div>
+            <div class="p-4 bg-white/20 rounded-xl">
+              <i class="fa-solid fa-chalkboard-user text-2xl"></i>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden flex items-center justify-between">
+            <div class="absolute -right-5 -bottom-5 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div>
+              <p class="text-xs uppercase tracking-wider font-semibold opacity-80">Total Tendik (${titleLabel})</p>
+              <h3 class="text-3xl font-extrabold mt-2">${tendikCount}</h3>
+            </div>
+            <div class="p-4 bg-white/20 rounded-xl">
+              <i class="fa-solid fa-user-gear text-2xl"></i>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderOverviewTab(container) {
+      selectedOverviewJenjang = "";
+      container.innerHTML = `
+        <div class="space-y-6 animate-fade-in">
+          <div class="bg-gradient-to-r from-slate-800 to-indigo-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+            <h3 class="text-xl font-bold">Selamat Datang di Portal Admin DAPODIK DIGITAL</h3>
+            <p class="text-xs text-indigo-200 mt-2 max-w-xl leading-relaxed font-medium">
+              Sistem manajemen data pokok pendidikan modern yang responsif, dinamis, dan terintegrasi penuh dengan basis data Google Sheets Anda.
+            </p>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fa-solid fa-filter text-indigo-600 mr-1"></i> Pilih Jenjang Tampilan:</span>
+            <div class="flex flex-wrap gap-2" id="overview-jenjang-buttons">
+              <button onclick="selectOverviewJenjang('semua')" id="btn-ov-semua" class="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all">Semua Jenjang</button>
+              <button onclick="selectOverviewJenjang('sd')" id="btn-ov-sd" class="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all">SD</button>
+              <button onclick="selectOverviewJenjang('smp')" id="btn-ov-smp" class="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all">SMP</button>
+              <button onclick="selectOverviewJenjang('sma')" id="btn-ov-sma" class="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all">SMA</button>
+              <button onclick="selectOverviewJenjang('emis')" id="btn-ov-emis" class="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all">EMIS</button>
+            </div>
+          </div>
+
+          <div id="overview-stats-container" class="space-y-6">
+            <div class="bg-white border border-dashed border-slate-200 p-12 rounded-2xl text-center shadow-sm">
+              <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-handshake"></i>
+              </div>
+              <h4 class="font-bold text-slate-800 text-sm">Selamat Datang di Ringkasan Data Sekolah</h4>
+              <p class="text-xs text-slate-400 mt-1.5 max-w-sm mx-auto leading-relaxed">Silakan pilih salah satu tombol jenjang di atas untuk mengaktifkan statistik data Siswa, Guru, and Tendik sesuai dengan kategori sekolah.</p>
+            </div>
+          </div>
+        </div>
+      `;
+      updateOverviewButtonStyles();
+      preloadOverviewStats();
+    }
+
+    // ---------------------------------------------------------
+    // D. LOGIKA OPERASIONAL SISWA (CompDashboardSiswa.html JS)
+    // ---------------------------------------------------------
+    function applySiswaCustomIdentity() {
+      const customTitle = localStorage.getItem('dapodik_custom_title') || "SISWA PORTAL";
+      const customSubtitle = localStorage.getItem('dapodik_custom_subtitle') || "Dapodik Akademik";
+      const customLogo = localStorage.getItem('dapodik_custom_logo');
+
+      const titleEl = document.getElementById('siswa-nav-title');
+      const subtitleEl = document.getElementById('siswa-nav-subtitle');
+      const logoImg = document.getElementById('siswa-custom-logo');
+      const defaultIcon = document.getElementById('siswa-default-icon');
+
+      if (titleEl) titleEl.innerText = customTitle;
+      if (subtitleEl) subtitleEl.innerText = customSubtitle;
+
+      if (customLogo && logoImg && defaultIcon) {
+        logoImg.src = customLogo;
+        logoImg.classList.remove('hidden');
+        defaultIcon.classList.add('hidden');
+      }
+    }
+
+    function fetchSiswaAcademicProfile() {
+      google.script.run
+        .withSuccessHandler((response) => {
+          if (!response.success) {
+            document.getElementById('siswa-academic-data').innerHTML = `
+              <div class="col-span-2 p-4 bg-amber-50 text-amber-700 rounded-xl text-center">
+                Profil akademik belum dihubungkan oleh Admin. Hubungi pihak sekolah untuk melengkapi profil dengan Nama: <b>${currentUser.nama}</b>
+                <p class="text-[10px] text-slate-400 mt-2 font-medium">Sistem mencari nama ini di tab Siswa_SD, Siswa_SMP, Siswa_SMA, dan Siswa_EMIS.</p>
+              </div>
+            `;
+            document.getElementById('siswa-detected-level').innerText = "Jenjang: Belum Terhubung";
+            return;
+          }
+
+          const siswa = response.data;
+          const studentId = siswa.NISN || siswa.NISM || '-';
+          document.getElementById('siswa-profile-nisn').innerText = `ID Siswa: ${studentId}`;
+          const jenjangClean = response.foundInSheet.replace("Siswa_", "").toUpperCase();
+          document.getElementById('siswa-detected-level').innerText = `Jenjang: ${jenjangClean}`;
+
+          let academicHTML = '';
+          response.headers.forEach(key => {
+            if (key !== "_rowNum") {
+              academicHTML += `
+                <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-indigo-50/20 transition-colors">
+                  <span class="block text-[10px] text-slate-400 uppercase font-extrabold tracking-wider mb-0.5">${key}</span>
+                  <span class="font-bold text-slate-800 break-words">${siswa[key] !== undefined && siswa[key] !== "" ? siswa[key] : '-'}</span>
+                </div>
+              `;
+            }
+          });
+          document.getElementById('siswa-academic-data').innerHTML = academicHTML;
+        })
+        .withFailureHandler((err) => {
+          document.getElementById('siswa-academic-data').innerHTML = `
+            <p class="text-rose-500 text-center col-span-2 py-4">Gagal memuat detail akademik. Hubungi tim teknis.</p>
+          `;
+        })
+        .findUserAcademicProfile("Siswa", currentUser.nama);
+    }
+
+    // ---------------------------------------------------------
+    // E. LOGIKA OPERASIONAL GURU (CompDashboardGuru.html JS)
+    // ---------------------------------------------------------
+    function applyGuruCustomIdentity() {
+      const customTitle = localStorage.getItem('dapodik_custom_title') || "GURU PORTAL";
+      const customSubtitle = localStorage.getItem('dapodik_custom_subtitle') || "Dapodik Pendidik";
+      const customLogo = localStorage.getItem('dapodik_custom_logo');
+
+      const titleEl = document.getElementById('guru-nav-title');
+      const subtitleEl = document.getElementById('guru-nav-subtitle');
+      const logoImg = document.getElementById('guru-custom-logo');
+      const defaultIcon = document.getElementById('guru-default-icon');
+
+      if (titleEl) titleEl.innerText = customTitle;
+      if (subtitleEl) subtitleEl.innerText = customSubtitle;
+
+      if (customLogo && logoImg && defaultIcon) {
+        logoImg.src = customLogo;
+        logoImg.classList.remove('hidden');
+        defaultIcon.classList.add('hidden');
+      }
+    }
+
+    function fetchGuruAcademicProfile() {
+      google.script.run
+        .withSuccessHandler((response) => {
+          if (!response.success) {
+            document.getElementById('guru-academic-data').innerHTML = `
+              <div class="col-span-2 p-4 bg-amber-50 text-amber-700 rounded-xl text-center">
+                Data guru belum dihubungkan oleh Admin. Hubungi pihak admin Dapodik sekolah untuk menambahkan profil Anda dengan nama: <b>${currentUser.nama}</b>
+                <p class="text-[10px] text-slate-400 mt-2 font-medium">Sistem mencari nama ini di tab Guru_SD, Guru_SMP, Guru_SMA, dan Guru_EMIS.</p>
+              </div>
+            `;
+            document.getElementById('guru-detected-level').innerText = "Jenjang: Belum Terhubung";
+            return;
+          }
+
+          const guru = response.data;
+          document.getElementById('guru-profile-nuptk').innerText = `NUPTK: ${guru.NUPTK || '-'}`;
+          const jenjangClean = response.foundInSheet.replace("Guru_", "").toUpperCase();
+          document.getElementById('guru-detected-level').innerText = `Jenjang: ${jenjangClean}`;
+
+          let academicHTML = '';
+          response.headers.forEach(key => {
+            if (key !== "_rowNum") {
+              academicHTML += `
+                <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-emerald-50/20 transition-colors">
+                  <span class="block text-[10px] text-slate-400 uppercase font-extrabold tracking-wider mb-0.5">${key}</span>
+                  <span class="font-bold text-slate-800 break-words">${guru[key] !== undefined && guru[key] !== "" ? guru[key] : '-'}</span>
+                </div>
+              `;
+            }
+          });
+          document.getElementById('guru-academic-data').innerHTML = academicHTML;
+        })
+        .withFailureHandler((err) => {
+          document.getElementById('guru-academic-data').innerHTML = `
+            <p class="text-rose-500 text-center col-span-2 py-4">Gagal memuat profil pendidik. Hubungi tim teknis.</p>
+          `;
+        })
+        .findUserAcademicProfile("Guru", currentUser.nama);
+    }
+
+    // ---------------------------------------------------------
+    // F. LOGIKA OPERASIONAL TENDIK (CompDashboardTendik.html JS)
+    // ---------------------------------------------------------
+    function applyTendikCustomIdentity() {
+      const customTitle = localStorage.getItem('dapodik_custom_title') || "STAFF PORTAL";
+      const customSubtitle = localStorage.getItem('dapodik_custom_subtitle') || "Tenaga Kependidikan";
+      const customLogo = localStorage.getItem('dapodik_custom_logo');
+
+      const titleEl = document.getElementById('tendik-nav-title');
+      const subtitleEl = document.getElementById('tendik-nav-subtitle');
+      const logoImg = document.getElementById('tendik-custom-logo');
+      const defaultIcon = document.getElementById('tendik-default-icon');
+
+      if (titleEl) titleEl.innerText = customTitle;
+      if (subtitleEl) subtitleEl.innerText = customSubtitle;
+
+      if (customLogo && logoImg && defaultIcon) {
+        logoImg.src = customLogo;
+        logoImg.classList.remove('hidden');
+        defaultIcon.classList.add('hidden');
+      }
+    }
+
+    function fetchTendikAcademicProfile() {
+      google.script.run
+        .withSuccessHandler((response) => {
+          if (!response.success) {
+            document.getElementById('tendik-academic-data').innerHTML = `
+              <div class="col-span-2 p-4 bg-amber-50 text-amber-700 rounded-xl text-center">
+                Data Staff Anda belum dihubungkan oleh Admin. Hubungi administrator Dapodik sekolah untuk menambahkan profil Anda dengan nama: <b>${currentUser.nama}</b>
+                <p class="text-[10px] text-slate-400 mt-2 font-medium">Sistem mencari nama ini di tab Tendik_SD, Tendik_SMP, Tendik_SMA, dan Tendik_EMIS.</p>
+              </div>
+            `;
+            document.getElementById('tendik-detected-level').innerText = "Jenjang: Belum Terhubung";
+            return;
+          }
+
+          const tendik = response.data;
+          document.getElementById('tendik-profile-nip').innerText = `NIP: ${tendik.NIP || '-'}`;
+          const jenjangClean = response.foundInSheet.replace("Tendik_", "").toUpperCase();
+          document.getElementById('tendik-detected-level').innerText = `Jenjang: ${jenjangClean}`;
+
+          let academicHTML = '';
+          response.headers.forEach(key => {
+            if (key !== "_rowNum") {
+              academicHTML += `
+                <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100/50 transition-colors">
+                  <span class="block text-[10px] text-slate-400 uppercase font-extrabold tracking-wider mb-0.5">${key}</span>
+                  <span class="font-bold text-slate-800 break-words">${tendik[key] !== undefined && tendik[key] !== "" ? tendik[key] : '-'}</span>
+                </div>
+              `;
+            }
+          });
+          document.getElementById('tendik-academic-data').innerHTML = academicHTML;
+        })
+        .withFailureHandler((err) => {
+          document.getElementById('tendik-academic-data').innerHTML = `
+            <p class="text-rose-500 text-center col-span-2 py-4">Gagal memuat profil staff. Hubungi tim teknis.</p>
+          `;
+        })
+        .findUserAcademicProfile("Tendik", currentUser.nama);
+    }
+
+    // ---------------------------------------------------------
+    // G. LOGIKA DATABASE SETTINGS (CompDashboardAdmin.html JS Settings Tab)
+    // ---------------------------------------------------------
+    function previewLogoUrl(urlValue) {
+      const output = document.getElementById('preview-logo-upload');
+      if (output) {
+        output.src = urlValue.trim() || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop&q=60';
+      }
+    }
+
+    function handleSaveAppIdentity(event) {
+      event.preventDefault();
+      const customTitle = document.getElementById('input-custom-title').value.trim();
+      const customSubtitle = document.getElementById('input-custom-subtitle').value.trim();
+      const customSlogan = document.getElementById('input-custom-slogan').value.trim();
+      const customFooter = document.getElementById('input-custom-footer').value.trim();
+      const logoUrl = document.getElementById('input-logo-url').value.trim();
+
+      localStorage.setItem('dapodik_custom_title', customTitle);
+      localStorage.setItem('dapodik_custom_subtitle', customSubtitle);
+      localStorage.setItem('dapodik_custom_slogan', customSlogan);
+      localStorage.setItem('dapodik_custom_footer', customFooter);
+      localStorage.setItem('dapodik_custom_logo', logoUrl);
+
+      applyAppCustomIdentity();
+      showAlert("Berhasil Disimpan", "Seluruh identitas kustom portal & halaman login sekolah berhasil diperbarui!", "success");
+    }
+
+    function updateBadgeStatus(id, text, color) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerText = text;
+      if (text.includes("Gabung") || text.includes("Belum")) {
+        el.className = "text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200";
+      } else {
+        el.className = `text-[10px] font-bold text-${color}-600 bg-${color}-50 px-2.5 py-0.5 rounded-full border border-${color}-200/60`;
+      }
+    }
+
+    function extractSpreadsheetId(input) {
+      if (!input) return "";
+      let str = input.trim();
+      if (str.includes("docs.google.com/spreadsheets")) {
+        const parts = str.split('/d/');
+        if (parts.length > 1) {
+          return parts[1].split('/')[0];
+        }
+      }
+      return str;
+    }
+
+    function handleDbSetup(event, dbType) {
+      event.preventDefault();
+      let rawInput = "";
+      
+      if (dbType === "default") rawInput = document.getElementById('input-db-default').value;
+      else if (dbType === "siswa") rawInput = document.getElementById('input-db-siswa').value;
+      else if (dbType === "guru") rawInput = document.getElementById('input-db-guru').value;
+      else if (dbType === "tendik") rawInput = document.getElementById('input-db-tendik').value;
+
+      const finalId = extractSpreadsheetId(rawInput);
+      if (!finalId && dbType === "default") {
+        showAlert("Validasi Gagal", "ID Spreadsheet Utama wajib diisi!", "error");
+        return;
+      }
+
+      showLoader(`Menghubungkan Database ${dbType.toUpperCase()}...`);
+      google.script.run
+        .withSuccessHandler((res) => {
+          hideLoader();
+          if (res.success) {
+            showAlert("Koneksi Sukses", res.message, "success");
+            loadDatabaseInfo(); 
+            switchAdminTab('db-settings');
+          } else {
+            showAlert("Koneksi Gagal", res.message, "error");
+          }
+        })
+        .updateSpreadsheetId(finalId, dbType);
+    }
+
+    function renderCrudTab(container, sheetName) {
+      container.innerHTML = `<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent"></div></div>`;
+      
+      google.script.run
+        .withSuccessHandler((response) => {
+          if (!response.success) {
+            container.innerHTML = `
+              <div class="bg-rose-50 border border-rose-100 p-6 rounded-2xl text-center">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500 text-3xl mb-3"></i>
+                <h3 class="font-bold text-rose-800 text-sm">Gagal Mengambil Data</h3>
+                <p class="text-xs text-rose-600 mt-1">${response.message}</p>
+                <p class="text-[10px] text-slate-400 mt-2">Pastikan sudah membuat tab sheet bernama "${sheetName}" di Spreadsheet Anda.</p>
+              </div>
+            `;
+            return;
+          }
+
+          loadedSheetData[sheetName] = response;
+          buildCrudUI(container, sheetName, response.headers, response.data);
+        })
+        .getSheetData(sheetName);
+    }
+
+    function buildCrudUI(container, sheetName, headers, data) {
+      let headerHTML = `
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-xl">
+            <div class="relative flex-1">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+              </span>
+              <input type="text" id="crud-search" oninput="filterCrudTable('${sheetName}')" class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Cari data ${sheetName.replace('_', ' ')}...">
+            </div>
+            
+            <div class="flex items-center gap-2 bg-white px-3 py-2 border border-slate-200 rounded-xl">
+              <span class="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">Tampilkan:</span>
+              <select id="table-limit-select" onchange="changeTableLimit('${sheetName}', this.value)" class="text-xs font-bold text-slate-700 bg-transparent focus:outline-none cursor-pointer">
+                <option value="10" ${currentTableLimit === "10" ? "selected" : ""}>10 Baris</option>
+                <option value="50" ${currentTableLimit === "50" ? "selected" : ""}>50 Baris</option>
+                <option value="all" ${currentTableLimit === "all" ? "selected" : ""}>Semua</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+            <button onclick="refreshCrudTable('${sheetName}')" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm" title="Segarkan Data">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
+            
+            <button onclick="downloadExcelData('${sheetName}')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all" title="Unduh Semua Kolom sebagai File Excel">
+              <i class="fa-solid fa-file-excel"></i> Download Excel
+            </button>
+
+            <button onclick="openAddModal('${sheetName}')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all">
+              <i class="fa-solid fa-plus"></i> Tambah Data ${sheetName.replace('_', ' ')}
+            </button>
+          </div>
+        </div>
+      `;
+
+      let displayHeaders = headers.filter(h => h !== "_rowNum").slice(0, 11);
+      let tableHeadHTML = `<th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap bg-slate-50 border-b border-slate-200">No</th>` + 
+                          displayHeaders.map(h => `<th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap bg-slate-50 border-b border-slate-200">${h}</th>`).join("");
+      
+      let maxRows = currentTableLimit === "all" ? data.length : parseInt(currentTableLimit);
+      let visibleData = data.slice(0, maxRows);
+
+      let tableRowsHTML = visibleData.map((row, index) => {
+        let numberCell = `<td class="px-6 py-3.5 text-xs text-indigo-600 font-bold whitespace-nowrap border-b border-slate-100 select-none">${index + 1}</td>`;
+        let cells = displayHeaders.map(h => {
+          let val = row[h] !== undefined ? row[h] : "";
+          return `<td class="px-6 py-3.5 text-xs text-slate-700 whitespace-nowrap border-b border-slate-100">${val}</td>`;
+        }).join("");
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition-colors" data-row-num="${row._rowNum}">
+            ${numberCell}
+            ${cells}
+            <td class="px-6 py-3.5 text-xs text-right whitespace-nowrap border-b border-slate-100 sticky right-0 bg-white shadow-[calc(-12px)_0_12px_-4px_rgba(0,0,0,0.05)]">
+              <button onclick="openEditModal('${sheetName}', ${row._rowNum})" class="p-1 px-2.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded text-slate-500 transition-colors font-semibold mr-1">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="deleteRowData('${sheetName}', ${row._rowNum})" class="p-1 px-2.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded text-slate-500 transition-colors font-semibold">
+                <i class="fa-solid fa-trash"></i> Hapus
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      if (data.length === 0) {
+        tableRowsHTML = `<tr><td colspan="${displayHeaders.length + 2}" class="px-6 py-8 text-center text-xs text-slate-400">Belum ada data tersedia di sheet ${sheetName}.</td></tr>`;
+      }
+
+      container.innerHTML = `
+        ${headerHTML}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div class="overflow-x-auto custom-scrollbar relative">
+            <table class="w-full min-w-max table-auto border-collapse">
+              <thead>
+                <tr>
+                  ${tableHeadHTML}
+                  <th class="px-6 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wider bg-slate-50 border-b border-slate-200 sticky right-0 shadow-[calc(-12px)_0_12px_-4px_rgba(0,0,0,0.05)]">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="crud-table-body">
+                ${tableRowsHTML}
+              </tbody>
+            </table>
+          </div>
+          <div class="p-4 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-500 font-semibold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <span>
+              <i class="fa-solid fa-table mr-1.5"></i> Menampilkan <b>${visibleData.length} baris</b> (Kolom A-K) dari total <b>${data.length} baris</b> dan <b>${headers.length - 1}</b> kolom di Google Sheets.
+            </span>
+            <span class="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
+              <i class="fa-solid fa-info-circle mr-1"></i> Gunakan tombol <b>Edit</b> untuk mengelola atau klik <b>Download Excel</b> untuk mengunduh seluruh kolom lengkap.
+            </span>
+          </div>
+        </div>
+      `;
+    }
+
+    function changeTableLimit(sheetName, limitValue) {
+      currentTableLimit = limitValue;
+      const info = loadedSheetData[sheetName];
+      if (info) {
+        const viewArea = document.getElementById('admin-view-area');
+        buildCrudUI(viewArea, sheetName, info.headers, info.data);
+      }
+    }
+
+    function filterCrudTable(sheetName) {
+      const q = document.getElementById('crud-search').value.toLowerCase();
+      const rows = document.getElementById('crud-table-body').getElementsByTagName('tr');
+      let visibleIndex = 1;
+      
+      for (let i = 0; i < rows.length; i++) {
+        let text = rows[i].innerText.toLowerCase();
+        if (text.includes("belum ada data")) continue;
+
+        if (text.includes(q)) {
+          rows[i].classList.remove('hidden');
+          const firstCell = rows[i].getElementsByTagName('td')[0];
+          if (firstCell) {
+            firstCell.innerText = visibleIndex;
+            visibleIndex++;
+          }
+        } else {
+          rows[i].classList.add('hidden');
+        }
+      }
+    }
+
+    function openAddModal(sheetName) {
+      const info = loadedSheetData[sheetName];
+      if (!info) return;
+
+      document.getElementById('crud-modal-title').innerText = `Tambah Data ${sheetName.replace('_', ' ')}`;
+      document.getElementById('crud-row-num').value = "";
+      document.getElementById('crud-dynamic-form').dataset.sheet = sheetName;
+
+      const fieldsContainer = document.getElementById('crud-fields-container');
+      fieldsContainer.innerHTML = "";
+
+      info.headers.forEach(header => {
+        if (header !== "_rowNum") {
+          fieldsContainer.appendChild(createInputField(header, ""));
+        }
+      });
+
+      document.getElementById('admin-crud-modal').classList.remove('hidden');
+    }
+
+    function openEditModal(sheetName, rowNum) {
+      const info = loadedSheetData[sheetName];
+      if (!info) return;
+
+      const record = info.data.find(r => r._rowNum === rowNum);
+      if (!record) return;
+
+      document.getElementById('crud-modal-title').innerText = `Edit Data ${sheetName.replace('_', ' ')}`;
+      document.getElementById('crud-row-num').value = rowNum;
+      document.getElementById('crud-dynamic-form').dataset.sheet = sheetName;
+
+      const fieldsContainer = document.getElementById('crud-fields-container');
+      fieldsContainer.innerHTML = "";
+
+      info.headers.forEach(header => {
+        if (header !== "_rowNum") {
+          let val = record[header] !== undefined ? record[header] : "";
+          fieldsContainer.appendChild(createInputField(header, val));
+        }
+      });
+
+      document.getElementById('admin-crud-modal').classList.remove('hidden');
+    }
+
+    function createInputField(header, value) {
+      const div = document.createElement('div');
+      div.className = "p-3 bg-slate-50/50 rounded-xl border border-slate-100";
+      let inputHTML = ``;
+      
+      if (header === "L/P" || header === "JK") {
+        inputHTML = `
+          <select id="field-${header}" name="${header}" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="" ${value === "" ? "selected" : ""}>- Pilih -</option>
+            <option value="L" ${value === "L" ? "selected" : ""}>Laki-laki (L)</option>
+            <option value="P" ${value === "P" ? "selected" : ""}>Perempuan (P)</option>
+          </select>
+        `;
+      } else if (header.toLowerCase().includes("email") || header === "E-Mail") {
+        inputHTML = `<input type="email" id="field-${header}" name="${header}" value="${value}" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">`;
+      } else {
+        inputHTML = `<input type="text" id="field-${header}" name="${header}" value="${value}" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">`;
+      }
+
+      div.innerHTML = `
+        <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wide">${header}</label>
+        ${inputHTML}
+      `;
+      return div;
+    }
+
+    function handleCrudSubmit(event) {
+      event.preventDefault();
+      const sheetName = event.target.dataset.sheet;
+      const rowNum = document.getElementById('crud-row-num').value;
+      const info = loadedSheetData[sheetName];
+
+      const record = {};
+      info.headers.forEach(h => {
+        if (h !== "_rowNum") {
+          record[h] = document.getElementById(`field-${h}`).value;
+        }
+      });
+
+      showLoader("Menyimpan data...");
+      closeCrudModal();
+
+      if (rowNum === "") {
+        google.script.run
+          .withSuccessHandler((res) => {
+            hideLoader();
+            if (res.success) {
+              showAlert("Berhasil", res.message, "success");
+              switchAdminTab(sheetName.toLowerCase().replace('_', '-')); 
+            } else {
+              showAlert("Gagal", res.message, "error");
+            }
+          })
+          .addData(sheetName, record);
+      } else {
+        google.script.run
+          .withSuccessHandler((res) => {
+            hideLoader();
+            if (res.success) {
+              showAlert("Berhasil", res.message, "success");
+              switchAdminTab(sheetName.toLowerCase().replace('_', '-')); 
+            } else {
+              showAlert("Gagal", res.message, "error");
+            }
+          })
+          .updateData(sheetName, rowNum, record);
+      }
+    }
+
+    function deleteRowData(sheetName, rowNum) {
+      if (confirm("Apakah Anda yakin ingin menghapus data ini secara permanen dari Google Sheets?")) {
+        showLoader("Menghapus data...");
+        google.script.run
+          .withSuccessHandler((res) => {
+            hideLoader();
+            if (res.success) {
+              showAlert("Berhasil Terhapus", res.message, "success");
+              switchAdminTab(sheetName.toLowerCase().replace('_', '-')); 
+            } else {
+              showAlert("Gagal", res.message, "error");
+            }
+          })
+          .deleteData(sheetName, rowNum);
+      }
+    }
+
+    function refreshCrudTable(sheetName) {
+      const viewArea = document.getElementById('admin-view-area');
+      renderCrudTab(viewArea, sheetName);
+      showAlert("Tabel Disegarkan", `Data ${sheetName.replace('_', ' ')} telah berhasil dimuat ulang dari Spreadsheet.`, "success");
+    }
+
+    function downloadExcelData(sheetName) {
+      const info = loadedSheetData[sheetName];
+      if (!info || !info.data || info.data.length === 0) {
+        showAlert("Gagal Mengunduh", "Tidak ada data yang tersedia untuk diunduh.", "error");
+        return;
+      }
+
+      showLoader("Mengekspor ke Excel...");
+
+      setTimeout(() => {
+        const headers = info.headers.filter(h => h !== "_rowNum");
+        
+        let excelTemplate = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+            <!--[if gte mso 9]>
+            <xml>
+              <x:ExcelWorkbook>
+                <x:ExcelWorksheets>
+                  <x:ExcelWorksheet>
+                    <x:Name>${sheetName.substring(0,31)}</x:Name>
+                    <x:WorksheetOptions>
+                      <x:DisplayGridlines/>
+                    </x:WorksheetOptions>
+                  </x:ExcelWorksheet>
+                </x:ExcelWorksheets>
+              </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
+            <style>
+              table { border-collapse: collapse; font-family: Calibri, 'Segoe UI', Arial, sans-serif; }
+              th { 
+                background-color: #1e293b; 
+                color: #ffffff; 
+                font-weight: bold; 
+                border: 1px solid #94a3b8; 
+                padding: 10px 14px; 
+                font-size: 12px;
+                text-align: left;
+              }
+              td { 
+                border: 1px solid #cbd5e1; 
+                padding: 8px 12px; 
+                font-size: 11px; 
+                color: #334155;
+              }
+              tr:nth-child(even) { background-color: #f8fafc; }
+              .text-format { mso-number-format:"\\@"; }
+            </style>
+          </head>
+          <body>
+            <table>
+              <thead>
+                <tr>
+                  ${headers.map(h => `<th>${h}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${info.data.map(row => {
+                  let rowCells = headers.map(h => {
+                    let val = row[h] !== undefined && row[h] !== null ? row[h] : "";
+                    let cleanVal = val.toString()
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;");
+                    
+                    let isNumberOrDateCode = h.match(/NISN|NISM|NIP|NUPTK|HP|No HP|Telepon|NIK|Kode|KK|Lahir|Tanggal|Tgl/i);
+                    let cssClass = isNumberOrDateCode ? ' class="text-format"' : '';
+                    
+                    return `<td${cssClass}>${cleanVal}</td>`;
+                  }).join('');
+                  return `<tr>${rowCells}</tr>`;
+                }).join('\n')}
+              </tbody>
+            </table>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `DAPODIK_${sheetName}_${timestamp}.xls`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        hideLoader();
+        showAlert("Unduhan Berhasil", `Seluruh data ${sheetName.replace('_', ' ')} telah diekspor rapi ke file Microsoft Excel!`, "success");
+      }, 400);
+    }
+
+    function renderSettingsTab(container) {
+      const savedTitle = localStorage.getItem('dapodik_custom_title') || "ADMIN PORTAL";
+      const savedSubtitle = localStorage.getItem('dapodik_custom_subtitle') || "Dapodik Administrator";
+      const savedAppSlogan = localStorage.getItem('dapodik_custom_slogan') || "Sistem Portal Pendidikan Modern";
+      const savedFooterText = localStorage.getItem('dapodik_custom_footer') || "DAPODIK Web App v3.0 \u00A9 2026";
+      const savedLogo = localStorage.getItem('dapodik_custom_logo') || "";
+
+      container.innerHTML = `
+        <div class="space-y-6 animate-fade-in max-w-4xl">
+          
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-circle-info text-indigo-600"></i> Kustomisasi Aplikasi & Pengaturan Login
+            </h3>
+            <p class="text-xs text-slate-500 mb-6 leading-relaxed">
+              Sesuaikan identitas nama portal, deskripsi sub-teks, logo sekolah, serta judul, slogan, dan hak cipta pada halaman Login Anda.
+            </p>
+
+            <form onsubmit="handleSaveAppIdentity(event)" class="space-y-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">Nama Portal Admin (Sidebar Header)</label>
+                  <input type="text" id="input-custom-title" value="${savedTitle}" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Contoh: ADMIN PORTAL">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">Sub-Teks Admin (Sidebar Subtitle)</label>
+                  <input type="text" id="input-custom-subtitle" value="${savedSubtitle}" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Contoh: Dapodik Administrator">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">Slogan Aplikasi (Halaman Login Subtitle)</label>
+                  <input type="text" id="input-custom-slogan" value="${savedAppSlogan}" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Contoh: Sistem Portal Pendidikan Modern">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">Teks Hak Cipta (Halaman Login Footer)</label>
+                  <input type="text" id="input-custom-footer" value="${savedFooterText}" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Contoh: DAPODIK Web App v3.0 \u00A9 2026">
+                </div>
+              </div>
+
+              <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center gap-4">
+                <div class="w-16 h-16 bg-white border border-slate-300 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                  <img id="preview-logo-upload" src="${savedLogo || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop&q=60'}" class="w-full h-full object-cover" alt="Pratinjau Logo" onerror="this.src='https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop&q=60'">
+                </div>
+                <div class="flex-1 w-full text-center sm:text-left">
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">URL Gambar Logo Sekolah</label>
+                  <p class="text-[10px] text-slate-400 mb-2">Tempelkan tautan URL gambar logo sekolah dari internet yang berakhiran .png, .jpg, atau .jpeg</p>
+                  <input type="url" id="input-logo-url" value="${savedLogo}" oninput="previewLogoUrl(this.value)" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="https://domain.com/path-ke-logo-anda.png">
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-2">
+                <button type="submit" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg shadow transition-all">
+                  Simpan Identitas & Logo <i class="fa-solid fa-floppy-disk ml-1.5"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-sm mb-2">
+              <i class="fa-solid fa-gears text-indigo-600 mr-2"></i>Sistem Migrasi & Multi-Database Setup
+            </h3>
+            <p class="text-xs text-slate-500 mb-6 leading-relaxed">
+              Anda dapat memisahkan penyimpanan database Dapodik Anda ke beberapa spreadsheet terpisah (Utama, Siswa, Guru, dan Tendik) secara mandiri. Tempelkan URL lengkap atau ID Spreadsheet kustom Anda pada kolom di bawah ini untuk menghubungkannya secara instan.
+            </p>
+            
+            <div class="space-y-6">
+              <!-- 1. SPREADSHEET UTAMA / USERS -->
+              <form onsubmit="handleDbSetup(event, 'default')" class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row items-end gap-4">
+                <div class="flex-1 w-full">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      <span class="p-1 px-2 bg-indigo-600 text-white rounded text-[10px] mr-1">UTAMA</span> Spreadsheet ID / URL (Akun & Users)
+                    </label>
+                    <span id="badge-db-default" class="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">Memeriksa...</span>
+                  </div>
+                  <input type="text" id="input-db-default" required class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Masukkan ID/URL Spreadsheet Utama">
+                </div>
+                <button type="submit" class="w-full md:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all whitespace-nowrap">
+                  Hubungkan Utama <i class="fa-solid fa-cloud-arrow-up ml-1"></i>
+                </button>
+              </form>
+
+              <!-- 2. SPREADSHEET SISWA -->
+              <form onsubmit="handleDbSetup(event, 'siswa')" class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row items-end gap-4">
+                <div class="flex-1 w-full">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      <span class="p-1 px-2 bg-red-500 text-white rounded text-[10px] mr-1">SISWA</span> Spreadsheet ID / URL (Siswa_SD, SMP, SMA, EMIS)
+                    </label>
+                    <span id="badge-db-siswa" class="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">Memeriksa...</span>
+                  </div>
+                  <input type="text" id="input-db-siswa" required class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="Masukkan ID/URL Spreadsheet Siswa (Kosongkan jika ingin gabung ke Utama)">
+                </div>
+                <button type="submit" class="w-full md:w-auto px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg shadow-sm transition-all whitespace-nowrap">
+                  Hubungkan Siswa <i class="fa-solid fa-cloud-arrow-up ml-1"></i>
+                </button>
+              </form>
+
+              <!-- 3. SPREADSHEET GURU -->
+              <form onsubmit="handleDbSetup(event, 'guru')" class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row items-end gap-4">
+                <div class="flex-1 w-full">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      <span class="p-1 px-2 bg-emerald-600 text-white rounded text-[10px] mr-1">GURU</span> Spreadsheet ID / URL (Guru_SD, SMP, SMA, EMIS)
+                    </label>
+                    <span id="badge-db-guru" class="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">Memeriksa...</span>
+                  </div>
+                  <input type="text" id="input-db-guru" required class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Masukkan ID/URL Spreadsheet Guru (Kosongkan jika ingin gabung ke Utama)">
+                </div>
+                <button type="submit" class="w-full md:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all whitespace-nowrap">
+                  Hubungkan Guru <i class="fa-solid fa-cloud-arrow-up ml-1"></i>
+                </button>
+              </form>
+
+              <!-- 4. SPREADSHEET TENDIK -->
+              <form onsubmit="handleDbSetup(event, 'tendik')" class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row items-end gap-4">
+                <div class="flex-1 w-full">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      <span class="p-1 px-2 bg-amber-500 text-white rounded text-[10px] mr-1">TENDIK</span> Spreadsheet ID / URL (Tendik_SD, SMP, SMA, EMIS)
+                    </label>
+                    <span id="badge-db-tendik" class="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">Memeriksa...</span>
+                  </div>
+                  <input type="text" id="input-db-tendik" required class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="Masukkan ID/URL Spreadsheet Tendik (Kosongkan jika ingin gabung ke Utama)">
+                </div>
+                <button type="submit" class="w-full md:w-auto px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs
