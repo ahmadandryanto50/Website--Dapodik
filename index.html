@@ -46,9 +46,11 @@
         <h4 class="font-bold text-slate-800 text-sm" id="alert-title">Pemberitahuan</h4>
         <p class="text-xs text-slate-600 mt-1" id="alert-message">Pesan notifikasi di sini.</p>
       </div>
-      <button onclick="closeAlert()" class="text-slate-400 hover:text-slate-600 transition-colors">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+      <div class="flex items-center gap-2">
+        <button onclick="closeAlert()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -436,7 +438,7 @@
     // Global Configuration (APP_CONFIG) untuk menaruh URL Apps Script secara langsung
     window.APP_CONFIG = {
       // ⚠️ SILAKAN TEMPELKAN URL DEPLOYMENT WEB APP GOOGLE APPS SCRIPT ANDA DI SINI:
-      scriptUrl: "https://script.google.com/a/macros/admin.smp.belajar.id/s/AKfycbwnuXfqi27_pCA8SI1q_ac6BD9F-plU50p8O-FtmmjB--NC3hPaxox7hr_gzn6FHlKkbw/exec"
+      scriptUrl: "https://script.google.com/macros/s/AKfycbwOrq9hcIDBR_FohnfKjZwjkOcTcA1zy-39E2pNy3ctSyamT_pWyedE0yuhT6yeo2ybbQ/exec"
     };
 
     // Global State
@@ -710,7 +712,12 @@
 
     // Ambil URL Apps Script aktif secara hirarkis (Utamakan APP_CONFIG dibanding LocalStorage)
     function getActiveGasUrl() {
-      return (window.APP_CONFIG && window.APP_CONFIG.scriptUrl) ? window.APP_CONFIG.scriptUrl : (localStorage.getItem('dapodik_gas_url') || "");
+      let url = (window.APP_CONFIG && window.APP_CONFIG.scriptUrl) ? window.APP_CONFIG.scriptUrl : (localStorage.getItem('dapodik_gas_url') || "");
+      if (typeof url === 'string') {
+        url = url.trim();
+        // CATATAN: Membiarkan pengetikan apa adanya untuk Workspace belajar.id agar tidak terjadi pemblokiran domain luar
+      }
+      return url;
     }
 
     // [BYPASS PRATINJAU]: Autentikasi aman tanpa error Apps Script
@@ -1915,7 +1922,7 @@
     // Mencegah error crash "google is not defined" saat dijalankan di server eksternal seperti GitHub / Vercel
     if (typeof google === 'undefined') {
       const createProxyInstance = () => {
-        return {
+        const instance = {
           successHandler: null,
           failureHandler: null,
           withSuccessHandler: function(successCallback) {
@@ -1927,32 +1934,33 @@
             return this;
           }
         };
+
+        const gasFunctions = [
+          'loginUser', 'getActiveSpreadsheetInfo', 'updateSpreadsheetId', 
+          'getSheetData', 'addData', 'updateData', 'deleteData', 'findUserAcademicProfile'
+        ];
+
+        gasFunctions.forEach(fn => {
+          instance[fn] = function(...args) {
+            const success = this.successHandler || (() => {});
+            const failure = this.failureHandler || (() => {});
+            
+            // Isolasi penuh handler untuk setiap instans agar aman dari race-condition paralel
+            setTimeout(() => {
+              routeGasCall(fn, args, success, failure);
+            }, 10);
+          };
+        });
+
+        return instance;
       };
 
-      const runProxy = createProxyInstance();
-      const gasFunctions = [
-        'loginUser', 'getActiveSpreadsheetInfo', 'updateSpreadsheetId', 
-        'getSheetData', 'addData', 'updateData', 'deleteData', 'findUserAcademicProfile'
-      ];
-
-      gasFunctions.forEach(fn => {
-        runProxy[fn] = function(...args) {
-          const success = this.successHandler || (() => {});
-          const failure = this.failureHandler || (() => {});
-          
-          // Reset handlers segera untuk panggilan asinkronus berikutnya guna mencegah polusi state
-          this.successHandler = null;
-          this.failureHandler = null;
-
-          setTimeout(() => {
-            routeGasCall(fn, args, success, failure);
-          }, 100);
-        };
-      });
-
+      // Solusi Balapan Handler: Menghasilkan runner instans baru tiap kali google.script.run dipanggil
       window.google = {
         script: {
-          run: runProxy
+          get run() {
+            return createProxyInstance();
+          }
         }
       };
 
@@ -1968,34 +1976,122 @@
       });
     }
 
+    // Fungsi Pengurai respons aman untuk menangani redirect paksa login Google Accounts 
+    // jika hak akses deploy Spreadsheet dibatasi organisasi belajar.id
+    const safeParseJSON = (text) => {
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        if (text.includes("<!DOCTYPE html>") || text.includes("<html") || text.includes("Google Accounts") || text.includes("Service Login")) {
+          throw new Error("WORKSPACE_RESTRICTED");
+        }
+        throw e;
+      }
+    };
+
+    // Fungsi Pembantu CORS Bypass dinamis menggunakan rantai fallback multi-proxy (CORS Proxy Chain)
+    // yang tangguh dan secara otomatis mendeteksi masalah autentikasi hak akses Workspace belajar.id Anda.
+    const fetchWithCORSProxy = async (url, functionName, args) => {
+      const argsString = JSON.stringify(args);
+      const targetUrl = `${url}?action=${encodeURIComponent(functionName)}&args=${encodeURIComponent(argsString)}&_cb=${Date.now()}`;
+      
+      console.log(`Mengirim API Call [${functionName}]...`);
+
+      // Daftar perantara CORS Proxy untuk dieksekusi secara sekuensial jika salah satu diblokir browser/rate-limited
+      const proxies = [
+        // Jalur 1: Koneksi Langsung (GET murni)
+        {
+          name: "Koneksi Langsung (No-Proxy)",
+          url: targetUrl,
+          isWrapped: false
+        },
+        // Jalur 2: CORSProxy.io (Cepat, Raw Response)
+        {
+          name: "CORSProxy.io",
+          url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+          isWrapped: false
+        },
+        // Jalur 3: AllOrigins Proxy (Stabil, Wrapped Contents JSON)
+        {
+          name: "AllOrigins Proxy",
+          url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
+          isWrapped: true
+        },
+        // Jalur 4: Codetabs Proxy
+        {
+          name: "Codetabs Proxy",
+          url: `https://api.codetabs.com/v1/proxy?guest=${encodeURIComponent(targetUrl)}`,
+          isWrapped: false
+        }
+      ];
+
+      let lastError = null;
+
+      for (const proxy of proxies) {
+        try {
+          console.log(`Mencoba jalur transmisi: ${proxy.name}`);
+          const response = await fetch(proxy.url, { method: 'GET', mode: 'cors' });
+          if (!response.ok) throw new Error("HTTP Status " + response.status);
+          
+          let responseText = await response.text();
+          let dataObj;
+
+          if (proxy.isWrapped) {
+            const wrappedData = JSON.parse(responseText);
+            if (wrappedData && wrappedData.contents) {
+              dataObj = safeParseJSON(wrappedData.contents);
+            } else {
+              throw new Error("Konten dibungkus kosong");
+            }
+          } else {
+            dataObj = safeParseJSON(responseText);
+          }
+
+          console.log(`Jalur ${proxy.name} Berhasil!`, dataObj);
+          return dataObj;
+
+        } catch (err) {
+          console.warn(`Jalur ${proxy.name} gagal terhubung:`, err.message);
+          
+          if (err.message === "WORKSPACE_RESTRICTED") {
+            // Deteksi Spesifik Restriksi Domain SMP Belajar ID
+            throw new Error("WORKSPACE_RESTRICTED");
+          }
+          lastError = err;
+        }
+      }
+
+      throw new Error(lastError ? lastError.message : "Semua jalur CORS Proxy gagal.");
+    };
+
     const routeGasCall = (functionName, args, successHandler, failureHandler) => {
       const gasUrl = getActiveGasUrl();
       if (gasUrl) {
-        // PERBAIKAN CORS UTAMA: Kirim request text/plain untuk mengindari Preflight precheck dari browser
-        fetch(gasUrl + '?action=' + functionName, {
-          method: 'POST',
-          mode: 'cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ functionName: functionName, arguments: args })
-        })
-        .then(res => {
-          if (!res.ok) throw new Error("HTTP Error " + res.status);
-          return res.json();
-        })
-        .then(data => {
-          if (data && data.success !== undefined) {
-            successHandler(data);
-          } else {
-            successHandler(data);
-          }
-        })
-        .catch(err => {
-          if (typeof failureHandler === 'function') {
-            failureHandler(err);
-          }
-          console.error("CORS fetch error:", err);
-          showAlert("Koneksi Gagal", "Gagal menghubungi Apps Script. Pastikan Web App Anda di-deploy ulang sebagai 'Anyone' dan file Code.gs Anda telah diperbarui!", "error");
-        });
+        fetchWithCORSProxy(gasUrl, functionName, args)
+          .then(data => {
+            if (data && typeof successHandler === 'function') {
+              successHandler(data);
+            }
+          })
+          .catch(err => {
+            if (typeof failureHandler === 'function') {
+              failureHandler(err);
+            }
+            console.error("CORS fetch error:", err);
+
+            if (err.message === "WORKSPACE_RESTRICTED") {
+              showAlert(
+                "Akses Workspace Dibatasi", 
+                "Google Workspace SMP Belajar ID membatasi akses keluar! Di editor Apps Script Anda, lakukan Deploy Ulang -> Kelola Penerapan -> Ubah Who Has Access (Siapa yang memiliki akses) menjadi 'Anyone' (Siapa saja), bukan internal organisasi sekolah Anda.", 
+                "error"
+              );
+            } else {
+              showAlert("Koneksi Gagal", "Gagal menghubungi Apps Script. Pastikan Web App Anda di-deploy ulang sebagai 'Anyone'!", "error");
+            }
+
+            // Fallback otomatis menggunakan simulasi lokal jika koneksi terputus/ditolak
+            emulateLocalDatabase(functionName, args, successHandler);
+          });
       } else {
         emulateLocalDatabase(functionName, args, successHandler);
       }
