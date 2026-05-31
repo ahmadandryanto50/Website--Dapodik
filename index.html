@@ -438,7 +438,7 @@
     // Global Configuration (APP_CONFIG) untuk menaruh URL Apps Script secara langsung
     window.APP_CONFIG = {
       // ⚠️ SILAKAN TEMPELKAN URL DEPLOYMENT WEB APP GOOGLE APPS SCRIPT ANDA DI SINI:
-      scriptUrl: "https://script.google.com/macros/s/AKfycbxsDyUs75jiMcgS_5kw7J-eaqfbG0jvRQX_NgqQM_sjkA6WLNPY6kWoQlFjodtkkCC04A/exec"
+      scriptUrl: "https://script.google.com/macros/s/AKfycbx8iyo0yRpfFw4OXOi3hgfdF8DXIcMNJmyHcK73JwT_esohWk5tR-8YLhBGfyLq5iWV3w/exec"
     };
 
     // Global State
@@ -1588,6 +1588,14 @@
         ${inputHTML}
       `;
       return div;
+    }
+
+    // Fungsi untuk menutup modal CRUD Dinamis secara aman
+    function closeCrudModal() {
+      const modal = document.getElementById('admin-crud-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
     }
 
     function handleCrudSubmit(event) {
