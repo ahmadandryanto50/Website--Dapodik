@@ -433,6 +433,12 @@
   <!-- DEKLARASI JS UTAMA SINKRONISASI SPA & FUNGSI RENDER (GLOBAL SCOPE) -->
   <!-- ======================================================================= -->
   <script>
+    // Global Configuration (APP_CONFIG) untuk menaruh URL Apps Script secara langsung
+    window.APP_CONFIG = {
+      // ⚠️ SILAKAN TEMPELKAN URL DEPLOYMENT WEB APP GOOGLE APPS SCRIPT ANDA DI SINI:
+      scriptUrl: ""
+    };
+
     // Global State
     let currentUser = null;
     let activeAdminTab = "overview";
@@ -702,6 +708,11 @@
       }
     }
 
+    // Ambil URL Apps Script aktif secara hirarkis (Utamakan APP_CONFIG dibanding LocalStorage)
+    function getActiveGasUrl() {
+      return (window.APP_CONFIG && window.APP_CONFIG.scriptUrl) ? window.APP_CONFIG.scriptUrl : (localStorage.getItem('dapodik_gas_url') || "https://script.google.com/a/macros/admin.smp.belajar.id/s/AKfycbxLOzwnk0NxhOP_Jj3ShKq2l2OU4RER8pJPCixcsGnGZJxSdafqcsUScYyk3c0OB8jdnw/exec");
+    }
+
     // [BYPASS PRATINJAU]: Autentikasi aman tanpa error Apps Script
     function handleLoginSubmit(event) {
       event.preventDefault();
@@ -710,8 +721,10 @@
 
       showLoader("Mengautentikasi...");
       
-      // Jika Apps Script API tidak terdeteksi atau bermasalah, paksa gunakan database simulasi lokal
-      if (typeof google === 'undefined' || !localStorage.getItem('dapodik_gas_url')) {
+      const activeGasUrl = getActiveGasUrl();
+
+      // Jika Apps Script API tidak terdeteksi atau kosong, paksa gunakan database simulasi lokal
+      if (typeof google === 'undefined' || !activeGasUrl) {
         setTimeout(() => {
           emulateLocalDatabase('loginUser', [userVal, passVal], (response) => {
             hideLoader();
@@ -1459,7 +1472,7 @@
           </div>
           <div class="p-4 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-500 font-semibold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <span>
-              <i class="fa-solid fa-table mr-1.5"></i> Menampilkan <b>${visibleData.length} baris</b> (Kolom A-K) dari total <b>${data.length} baris</b> dan <b>${headers.length - 1}</b> kolom di Google Sheets.
+              <i class="fa-solid fa-table mr-1.5"></i> Menampilkan <b>${visibleData.length} baris</b> (Kolom A-K) dari total <b>${data.length} baris</b> and <b>${headers.length - 1}</b> kolom di Google Sheets.
             </span>
             <span class="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
               <i class="fa-solid fa-info-circle mr-1"></i> Gunakan tombol <b>Edit</b> untuk mengelola atau klik <b>Download Excel</b> untuk mengunduh seluruh kolom lengkap.
@@ -1568,10 +1581,6 @@
         ${inputHTML}
       `;
       return div;
-    }
-
-    function closeCrudModal() {
-      document.getElementById('admin-crud-modal').classList.add('hidden');
     }
 
     function handleCrudSubmit(event) {
@@ -1917,7 +1926,7 @@
       };
 
       const routeGasCall = (functionName, args, successHandler, failureHandler) => {
-        const gasUrl = localStorage.getItem('dapodik_gas_url');
+        const gasUrl = getActiveGasUrl();
         if (gasUrl) {
           fetch(gasUrl + '?action=' + functionName, {
             method: 'POST',
